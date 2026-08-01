@@ -1,32 +1,31 @@
-# React + TypeScript + Vite
+# Markov Transitions
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+An interactive article and tool for modeling player lifecycles — onboarding,
+engagement, churn, and win-back — as Markov chains. Build a chain of states
+and transitions on an editable canvas, then run calculators for:
 
-Currently, two official plugins are available:
+- **Diagnostics** — validate the chain and flag issues (unreachable states,
+  rows that don't sum to 1, etc.)
+- **N-step forecast** — project the state distribution forward from a
+  starting mix
+- **Absorption** — absorption probabilities and expected time to churn for
+  chains with absorbing states
+- **Steady state** — the long-run equilibrium distribution for chains without
+  absorbing states
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Live site:** _(filled in after first deploy — see Task 14)_
 
-## React Compiler
+## Local development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # start the dev server
+npm run test     # run the test suite
+npm run build    # type-check and build for production
+npm run lint     # run oxlint
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Status
+
+The interactive canvas and calculators are fully implemented. The article's
+prose sections are currently placeholder scaffolding pending real content.
