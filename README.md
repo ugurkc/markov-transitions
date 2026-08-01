@@ -27,5 +27,4 @@ npm run lint     # run oxlint
 
 ## Status
 
-The interactive canvas and calculators are fully implemented. The article's
-prose sections are currently placeholder scaffolding pending real content.
+The interactive canvas, calculators, and article prose are all in place.

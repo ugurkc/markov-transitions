@@ -264,6 +264,22 @@ main {
   letter-spacing: -0.022em;
 }
 
+.subtitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 450;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.article p {
+  margin: 14px 0;
+}
+
+.article section p + p {
+  margin-top: 14px;
+}
+
 h2 {
   margin: 44px 0 12px;
   font-size: 1.4rem;
