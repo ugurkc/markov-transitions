@@ -66,24 +66,24 @@ function ChainCanvasInner({ chain, dispatch }: ChainCanvasProps) {
     [chain.states, selected, validation, dispatch],
   )
 
-  const edges = useMemo<Edge[]>(
-    () =>
-      chain.transitions.map((t) => ({
-        id: t.id,
-        type: 'transition',
-        source: t.from,
-        target: t.to,
-        selected: selected.has(t.id),
-        markerEnd: { type: MarkerType.ArrowClosed },
-        data: {
-          probability: t.probability,
-          isSelfLoop: t.from === t.to,
-          onSetProbability: (p: number) =>
-            dispatch({ type: 'setProbability', id: t.id, probability: p }),
-        },
-      })),
-    [chain.transitions, selected, dispatch],
-  )
+  const edges = useMemo<Edge[]>(() => {
+    const pairs = new Set(chain.transitions.map((t) => `${t.from}->${t.to}`))
+    return chain.transitions.map((t) => ({
+      id: t.id,
+      type: 'transition',
+      source: t.from,
+      target: t.to,
+      selected: selected.has(t.id),
+      markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
+      data: {
+        probability: t.probability,
+        isSelfLoop: t.from === t.to,
+        hasReverse: t.from !== t.to && pairs.has(`${t.to}->${t.from}`),
+        onSetProbability: (p: number) =>
+          dispatch({ type: 'setProbability', id: t.id, probability: p }),
+      },
+    }))
+  }, [chain.transitions, selected, dispatch])
 
   const updateSelection = useCallback((id: string, isSelected: boolean) => {
     setSelected((prev) => {

@@ -5,6 +5,8 @@ import type { EdgeProps } from '@xyflow/react'
 export interface TransitionEdgeData {
   probability: number
   isSelfLoop: boolean
+  /** True when a transition in the opposite direction also exists. */
+  hasReverse: boolean
   onSetProbability: (p: number) => void
 }
 
@@ -21,6 +23,23 @@ export function TransitionEdge(props: EdgeProps) {
     path = `M ${sourceX} ${sourceY} C ${sourceX + r * 2} ${sourceY + r}, ${targetX + r * 2} ${targetY - r}, ${targetX} ${targetY}`
     labelX = sourceX + r * 1.9
     labelY = (sourceY + targetY) / 2
+  } else if (d.hasReverse) {
+    // A reverse transition exists, so the default bezier paths (and their
+    // midpoint labels) would sit on top of each other. Bow this edge to the
+    // right of its travel direction — the reversed edge bows the opposite way,
+    // separating the pair into a lens with one label per curve.
+    const dx = targetX - sourceX
+    const dy = targetY - sourceY
+    const len = Math.hypot(dx, dy) || 1
+    const nx = -dy / len
+    const ny = dx / len
+    const bow = 30
+    const cx = (sourceX + targetX) / 2 + nx * bow * 2
+    const cy = (sourceY + targetY) / 2 + ny * bow * 2
+    path = `M ${sourceX} ${sourceY} Q ${cx} ${cy} ${targetX} ${targetY}`
+    // Quadratic bezier at t=0.5 — the curve's apex, where the label belongs.
+    labelX = (sourceX + targetX) / 2 + nx * bow
+    labelY = (sourceY + targetY) / 2 + ny * bow
   } else {
     ;[path, labelX, labelY] = getBezierPath(props)
   }
