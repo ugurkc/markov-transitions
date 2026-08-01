@@ -4,7 +4,10 @@
   box-sizing: border-box;
 }
 
-/* Explicit light theme for v1, regardless of OS preference. */
+/* Light theme (default) tokens. Dark overrides below: once from system
+   preference (prefers-color-scheme) before any explicit choice is stored,
+   and once from an explicit data-theme attribute set by the toggle — the
+   attribute always wins over the system signal, in both directions. */
 :root {
   color-scheme: light;
   --ink: #16181d;
@@ -13,6 +16,7 @@
   --accent-strong: #4338ca;
   --accent-soft: #e0e7ff;
   --accent-faint: #eef2ff;
+  --on-accent: #ffffff;
   --border: #e5e7eb;
   --border-strong: #d3d7de;
   --paper: #f7f8fa;
@@ -21,13 +25,83 @@
   --placeholder-border: #c9cdd6;
   --placeholder-bg: #fafbfc;
   --danger: #dc2626;
+  /* Fixed (non-theme-flipping) saturated red for small solid-fill badges,
+     so white badge text stays legible in both themes. */
+  --danger-solid: #dc2626;
   --danger-ink: #991b1b;
   --danger-bg: #fef2f2;
+  --danger-border: #fca5a5;
+  --danger-soft: #fecaca;
+  --edge-line: #a3aab8;
+  --handle-fill: #b6bdc9;
+  --handle-ring: #ffffff;
   --shadow-sm: 0 1px 2px rgba(22, 24, 29, 0.05), 0 1px 1px rgba(22, 24, 29, 0.03);
   --shadow-md: 0 1px 2px rgba(22, 24, 29, 0.05), 0 12px 32px -16px rgba(22, 24, 29, 0.18);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --ink: #e7e9ee;
+    --muted: #9aa1af;
+    --accent: #818cf8;
+    --accent-strong: #a5b4fc;
+    --accent-soft: #363162;
+    --accent-faint: #211f36;
+    --on-accent: #14152b;
+    --border: #2a2d36;
+    --border-strong: #3a3e4a;
+    --paper: #0e1014;
+    --card: #16181e;
+    --surface: #1b1e25;
+    --placeholder-border: #3a3e4a;
+    --placeholder-bg: #191b21;
+    --danger: #f87171;
+    --danger-ink: #fca5a5;
+    --danger-bg: #3a1a1a;
+    --danger-border: #7f1d1d;
+    --danger-soft: rgba(248, 113, 113, 0.35);
+    --edge-line: #565c68;
+    --handle-fill: #6b7280;
+    --handle-ring: #16181e;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ink: #e7e9ee;
+  --muted: #9aa1af;
+  --accent: #818cf8;
+  --accent-strong: #a5b4fc;
+  --accent-soft: #363162;
+  --accent-faint: #211f36;
+  --on-accent: #14152b;
+  --border: #2a2d36;
+  --border-strong: #3a3e4a;
+  --paper: #0e1014;
+  --card: #16181e;
+  --surface: #1b1e25;
+  --placeholder-border: #3a3e4a;
+  --placeholder-bg: #191b21;
+  --danger: #f87171;
+  --danger-ink: #fca5a5;
+  --danger-bg: #3a1a1a;
+  --danger-border: #7f1d1d;
+  --danger-soft: rgba(248, 113, 113, 0.35);
+  --edge-line: #565c68;
+  --handle-fill: #6b7280;
+  --handle-ring: #16181e;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 html {
@@ -43,6 +117,33 @@ body {
   color: var(--ink);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* --- Theme toggle --- */
+
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease,
+    color 120ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-faint), var(--shadow-sm);
 }
 
 /* --- Page shell: sidebar + main --- */
@@ -116,19 +217,25 @@ main {
 
 /* --- Article layout --- */
 
-/* Prose blocks sit in a 720px reading column; the tool section breaks out. */
+/* Prose blocks sit in a 720px reading column that hugs the left edge of a
+   1100px-wide centered container; the tool section fills that same
+   container. Every section therefore shares one left edge at any viewport
+   width — independently auto-centering a 720px column and a 1100px column
+   in the same parent misaligns them whenever the parent is between the two
+   widths, which is what caused the previous inconsistent indentation. */
 .article {
+  max-width: 1148px;
+  margin: 0 auto;
   padding: 0 24px 32px;
 }
 
 .article > * {
   max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .article > .tool-section {
   max-width: 1100px;
+  width: 100%;
 }
 
 .article section {
@@ -235,7 +342,7 @@ a {
 .canvas-toolbar button:first-child {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .canvas-toolbar button:first-child:hover {
@@ -253,7 +360,7 @@ a {
 }
 
 .react-flow__edge-path {
-  stroke: #a3aab8;
+  stroke: var(--edge-line);
   stroke-width: 1.6;
 }
 
@@ -265,8 +372,8 @@ a {
 .react-flow__handle {
   width: 7px;
   height: 7px;
-  background: #b6bdc9;
-  border: 2px solid #fff;
+  background: var(--handle-fill);
+  border: 2px solid var(--handle-ring);
 }
 
 .state-node {
@@ -293,7 +400,7 @@ a {
 }
 
 .react-flow__node.selected .state-node.invalid {
-  box-shadow: 0 0 0 3px #fecaca, var(--shadow-sm);
+  box-shadow: 0 0 0 3px var(--danger-soft), var(--shadow-sm);
 }
 
 .state-node input {
@@ -311,7 +418,7 @@ a {
   right: -12px;
   padding: 1px 8px;
   border-radius: 999px;
-  background: var(--danger);
+  background: var(--danger-solid);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -383,7 +490,7 @@ a {
 }
 
 .banner-error {
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-md);
   padding: 14px 18px;
   background: var(--danger-bg);
@@ -403,7 +510,7 @@ a {
 
 .chip {
   padding: 2px 10px;
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--danger-border);
   border-radius: 999px;
   background: var(--surface);
   font-size: 12px;

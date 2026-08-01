@@ -22,6 +22,7 @@ import type { Chain } from '../lib/types'
 import { validateChain } from '../lib/chain'
 import { presets } from '../lib/presets'
 import type { ChainAction } from '../state/chainReducer'
+import type { Theme } from '../state/useTheme'
 import { StateNode } from './StateNode'
 import { TransitionEdge } from './TransitionEdge'
 
@@ -31,9 +32,10 @@ const edgeTypes: EdgeTypes = { transition: TransitionEdge }
 interface ChainCanvasProps {
   chain: Chain
   dispatch: React.Dispatch<ChainAction>
+  theme: Theme
 }
 
-function ChainCanvasInner({ chain, dispatch }: ChainCanvasProps) {
+function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition } = useReactFlow()
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
@@ -206,6 +208,7 @@ function ChainCanvasInner({ chain, dispatch }: ChainCanvasProps) {
           connectionMode={ConnectionMode.Loose}
           deleteKeyCode={['Backspace', 'Delete']}
           zoomOnDoubleClick={false}
+          colorMode={theme}
           fitView
         >
           <Background />

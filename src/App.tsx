@@ -1,8 +1,10 @@
 import { ChainCanvas } from './components/ChainCanvas'
 import { Placeholder } from './components/Placeholder'
 import { Sidebar } from './components/Sidebar'
+import { ThemeToggle } from './components/ThemeToggle'
 import { CalculatorsSection } from './components/panels/CalculatorsSection'
 import { useChain } from './state/useChain'
+import { useTheme } from './state/useTheme'
 
 const REPO_URL = 'https://github.com/ugurkc/markov-transitions'
 
@@ -17,8 +19,13 @@ const SECTIONS = [
 
 function App() {
   const { chain, dispatch } = useChain()
+  const [theme, setTheme] = useTheme()
   return (
     <div className="page">
+      <ThemeToggle
+        theme={theme}
+        onToggle={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+      />
       <Sidebar sections={SECTIONS} />
       <main>
         <article className="article">
@@ -47,7 +54,7 @@ function App() {
 
           <section className="tool-section" id="try-it">
             <h2>Try it: build your own player lifecycle</h2>
-            <ChainCanvas chain={chain} dispatch={dispatch} />
+            <ChainCanvas chain={chain} dispatch={dispatch} theme={theme} />
             <CalculatorsSection chain={chain} />
           </section>
 
