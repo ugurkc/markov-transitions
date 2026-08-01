@@ -22,6 +22,7 @@ import type { Chain } from '../lib/types'
 import { validateChain } from '../lib/chain'
 import { presets } from '../lib/presets'
 import type { ChainAction } from '../state/chainReducer'
+import { flushCustomChain, loadSavedCustomChain } from '../state/useChain'
 import type { Theme } from '../state/useTheme'
 import { StateNode } from './StateNode'
 import { TransitionEdge } from './TransitionEdge'
@@ -160,35 +161,30 @@ function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
     })
   }, [dispatch, screenToFlowPosition])
 
-  // Only a custom chain represents unsaved work; switching between presets
-  // (which are fixed) needs no confirmation.
-  const confirmDiscard = useCallback(() => {
-    if (chain.id !== 'custom' || chain.states.length === 0) return true
-    return window.confirm('Replace your custom chain? This cannot be undone.')
-  }, [chain])
-
+  // Your custom chain is saved separately from whichever chain is on screen
+  // (see useChain), so switching tabs never loses it — no confirmation needed.
   const loadPreset = useCallback(
     (id: string) => {
       const preset = presets.find((p) => p.id === id)
       if (!preset || chain.id === id) return
-      if (!confirmDiscard()) return
+      flushCustomChain(chain)
       setSelected(new Set())
       measuredRef.current.clear()
       dispatch({ type: 'loadChain', chain: structuredClone(preset) })
     },
-    [dispatch, chain.id, confirmDiscard],
+    [dispatch, chain],
   )
 
-  const startBlank = useCallback(() => {
-    if (chain.id === 'custom' && chain.states.length === 0) return
-    if (!confirmDiscard()) return
+  const startCustom = useCallback(() => {
+    if (chain.id === 'custom') return
+    const saved = loadSavedCustomChain()
     setSelected(new Set())
     measuredRef.current.clear()
     dispatch({
       type: 'loadChain',
-      chain: { id: 'custom', name: 'My chain', states: [], transitions: [] },
+      chain: saved ?? { id: 'custom', name: 'My chain', states: [], transitions: [] },
     })
-  }, [dispatch, chain, confirmDiscard])
+  }, [dispatch, chain.id])
 
   return (
     <div>
@@ -206,7 +202,7 @@ function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
         <button
           type="button"
           className={`preset-tab${chain.id === 'custom' ? ' active' : ''}`}
-          onClick={startBlank}
+          onClick={startCustom}
         >
           Build your own
         </button>
