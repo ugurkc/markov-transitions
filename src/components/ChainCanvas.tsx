@@ -191,6 +191,7 @@ function ChainCanvasInner({ chain, dispatch }: ChainCanvasProps) {
       </div>
       <div
         ref={wrapperRef}
+        className="canvas-wrapper"
         style={{ width: '100%', height: 480 }}
         onDoubleClick={onPaneDoubleClick}
       >
