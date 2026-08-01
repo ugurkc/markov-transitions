@@ -281,8 +281,6 @@ function App() {
             </section>
 
             <footer className="article-footer">
-              <a href={import.meta.env.BASE_URL}>&larr; More writing</a>
-              <span aria-hidden="true"> &middot; </span>
               <a href={REPO_URL}>Source on GitHub</a>
             </footer>
           </article>

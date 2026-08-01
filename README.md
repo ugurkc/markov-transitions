@@ -1,10 +1,10 @@
 # Watershed
 
-A personal blog, with Watershed — an interactive article and tool for
-modeling player lifecycles — onboarding, engagement, churn, and win-back — as
-Markov chains — as its first post. You can't move the destination directly;
-you can only reshape the path that leads there. Build a chain of states and
-transitions on an editable canvas, then run calculators for:
+An interactive article and tool for modeling player lifecycles — onboarding,
+engagement, churn, and win-back — as Markov chains. You can't move the
+destination directly; you can only reshape the path that leads there. Build a
+chain of states and transitions on an editable canvas, then run calculators
+for:
 
 - **Cohort simulation** — designate one state as the input (where new players
   join) and one as the output (where players leave), painted green/red on the
@@ -25,14 +25,7 @@ transitions on an editable canvas, then run calculators for:
   an absorbing state this trends toward 100% there, showing that everyone
   gets there eventually
 
-**Live site:** https://ugurkc.github.io/watershed/ (blog home, with a
-directory of posts) — the Watershed essay itself lives at
-https://ugurkc.github.io/watershed/essays/watershed/
-
-The site is a Vite multi-page build: the blog landing page/directory at the
-root (`index.html`, `src/Landing.tsx`), and each post as its own page under
-`essays/<slug>/` (the Watershed essay is `essays/watershed/index.html`,
-`src/App.tsx`).
+**Live site:** https://ugurkc.github.io/watershed/
 
 ## Local development
 
@@ -46,6 +39,4 @@ npm run lint     # run oxlint
 
 ## Status
 
-The interactive canvas, calculators, and article prose are all in place, and
-the site now sits behind a blog landing page/directory with Watershed as the
-first post.
+The interactive canvas, calculators, and article prose are all in place.
