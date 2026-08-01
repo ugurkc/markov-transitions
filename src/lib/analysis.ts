@@ -24,21 +24,30 @@ export interface AbsorptionResult {
 export function absorptionAnalysis(p: Matrix, absorbingIdx: number[]): AbsorptionResult {
   const n = p.length
   const absorbing = new Set(absorbingIdx)
+  const absorbingUnique = [...absorbing]
+  for (const i of absorbingUnique) {
+    if (Math.abs(p[i][i] - 1) > 1e-9) {
+      throw new Error('absorbingIdx contains a non-absorbing state')
+    }
+  }
   const transient = Array.from({ length: n }, (_, i) => i).filter((i) => !absorbing.has(i))
   const q = transient.map((i) => transient.map((j) => p[i][j]))
-  const r = transient.map((i) => absorbingIdx.map((j) => p[i][j]))
+  const r = transient.map((i) => absorbingUnique.map((j) => p[i][j]))
   let nMat: Matrix
   try {
     nMat = invert(identity(transient.length).map((row, i) => row.map((x, j) => x - q[i][j])))
-  } catch {
-    throw new Error('Some states can never reach an absorbing state')
+  } catch (err) {
+    if (err instanceof Error && err.message === 'Matrix is singular') {
+      throw new Error('Some states can never reach an absorbing state')
+    }
+    throw err
   }
   const b = matMul(nMat, r)
   const absorptionProbs = Array.from({ length: n }, () => Array(n).fill(0))
   const expectedSteps = Array(n).fill(0)
-  absorbingIdx.forEach((i) => { absorptionProbs[i][i] = 1 })
+  absorbingUnique.forEach((i) => { absorptionProbs[i][i] = 1 })
   transient.forEach((ti, x) => {
-    absorbingIdx.forEach((aj, y) => { absorptionProbs[ti][aj] = b[x][y] })
+    absorbingUnique.forEach((aj, y) => { absorptionProbs[ti][aj] = b[x][y] })
     expectedSteps[ti] = nMat[x].reduce((a, v) => a + v, 0)
   })
   return { absorptionProbs, expectedSteps }
@@ -52,6 +61,10 @@ export interface SteadyStateResult {
 /**
  * Stationary distribution by power iteration on the lazy chain (P+I)/2,
  * which has the same stationary distribution and is always aperiodic.
+ *
+ * The caller must ensure the chain has exactly one closed class (via
+ * `closedClasses`); with two or more, the result is a start-dependent
+ * mixture (here: the uniform-start limit), not "the" stationary distribution.
  */
 export function steadyState(p: Matrix, maxIter = 100_000, tol = 1e-12): SteadyStateResult {
   const n = p.length
@@ -73,6 +86,13 @@ export interface DiagnosticsRow {
   dropOff: number | null
 }
 
+/**
+ * Per-state diagnostics: self-loop probability, strongest outbound transition
+ * to a different state, and direct probability into the risk state.
+ *
+ * An unknown `riskStateId` behaves like `null` (dropOff is null). Ties in
+ * outbound probability resolve to the lowest state index.
+ */
 export function diagnostics(chain: Chain, riskStateId: string | null): DiagnosticsRow[] {
   const m = buildMatrix(chain)
   const riskIdx = riskStateId ? chain.states.findIndex((s) => s.id === riskStateId) : -1

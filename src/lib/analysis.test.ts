@@ -23,6 +23,9 @@ describe('nStepForecast', () => {
     expect(steps[2][0]).toBeCloseTo(0.86, 12) // 0.9·0.9 + 0.1·0.5
     expect(steps[2][1]).toBeCloseTo(0.14, 12)
   })
+  it('n = 0 returns just the start distribution', () => {
+    expect(nStepForecast(weather, [1, 0], 0)).toEqual([[1, 0]])
+  })
 })
 
 // States: s0 (absorbing), s1, s2, s3 (absorbing); p=0.5 each direction.
@@ -62,6 +65,16 @@ describe('absorptionAnalysis', () => {
       'Some states can never reach an absorbing state',
     )
   })
+  it('rejects an absorbingIdx entry that is not actually absorbing', () => {
+    expect(() => absorptionAnalysis(drunkard, [0, 1])).toThrowError(
+      'absorbingIdx contains a non-absorbing state',
+    )
+  })
+  it('ignores duplicate indices in absorbingIdx', () => {
+    const dup = absorptionAnalysis(drunkard, [0, 3, 3])
+    expect(dup.absorptionProbs).toEqual(r.absorptionProbs)
+    expect(dup.expectedSteps).toEqual(r.expectedSteps)
+  })
 })
 
 describe('steadyState', () => {
@@ -75,6 +88,10 @@ describe('steadyState', () => {
     const r = steadyState([[0, 1], [1, 0]])
     expect(r.converged).toBe(true)
     expect(r.distribution[0]).toBeCloseTo(0.5, 8)
+  })
+  it('reports converged: false when maxIter is exhausted', () => {
+    const r = steadyState([[0.9, 0.1], [0.5, 0.5]], 1)
+    expect(r.converged).toBe(false)
   })
 })
 
@@ -93,5 +110,9 @@ describe('diagnostics', () => {
   })
   it('risk state omitted → dropOff is null', () => {
     expect(diagnostics(c, null)[0].dropOff).toBeNull()
+  })
+  it('a state with no outbound to a different state has topOutbound null', () => {
+    const cRow = diagnostics(c, null).find((row) => row.stateId === 'C')!
+    expect(cRow.topOutbound).toBeNull()
   })
 })
