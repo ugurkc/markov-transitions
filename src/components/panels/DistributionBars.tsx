@@ -3,8 +3,10 @@ import { formatPct } from './format'
 export interface DistributionItem {
   id: string
   name: string
-  /** Probability in [0, 1]. */
+  /** Bar length as a fraction in [0, 1]. */
   value: number
+  /** Text shown at the end of the row; defaults to `value` as a percentage. */
+  display?: string
 }
 
 /**
@@ -24,7 +26,7 @@ export function DistributionBars({ items }: { items: DistributionItem[] }) {
               style={{ width: `${Math.max(0, Math.min(1, item.value)) * 100}%` }}
             />
           </div>
-          <span className="dist-value">{formatPct(item.value)}</span>
+          <span className="dist-value">{item.display ?? formatPct(item.value)}</span>
         </div>
       ))}
     </div>

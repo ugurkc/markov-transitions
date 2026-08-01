@@ -23,7 +23,9 @@ import { validateChain } from '../lib/chain'
 import { presets } from '../lib/presets'
 import type { ChainAction } from '../state/chainReducer'
 import { flushCustomChain, loadSavedCustomChain } from '../state/useChain'
+import type { Simulation } from '../state/useSimulation'
 import type { Theme } from '../state/useTheme'
+import { SimulationOverlay } from './SimulationOverlay'
 import { StateNode } from './StateNode'
 import { TransitionEdge } from './TransitionEdge'
 
@@ -34,9 +36,10 @@ interface ChainCanvasProps {
   chain: Chain
   dispatch: React.Dispatch<ChainAction>
   theme: Theme
+  sim: Simulation
 }
 
-function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
+function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition } = useReactFlow()
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
@@ -233,6 +236,12 @@ function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
         >
           <Background />
           <Controls />
+          <SimulationOverlay
+            chain={chain}
+            moves={sim.moves}
+            progress={sim.progress}
+            visible={sim.playing || sim.progress > 0}
+          />
         </ReactFlow>
       </div>
     </div>
