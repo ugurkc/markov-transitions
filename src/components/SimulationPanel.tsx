@@ -29,12 +29,6 @@ export function SimulationPanel({ chain, dispatch, sim }: SimulationPanelProps) 
   return (
     <div className="panel sim-panel">
       <h3>Simulate a cohort</h3>
-      <p className="panel-note">
-        Drop players into any state and watch them move, one week at a time.
-        Each player rolls their own dice against the transition
-        probabilities &mdash; so unlike the exact forecast below, results
-        wobble from run to run, exactly the way a real cohort does.
-      </p>
 
       <p className="sim-group-label">Input &amp; output</p>
       <div className="sim-endpoints">
@@ -167,6 +161,13 @@ export function SimulationPanel({ chain, dispatch, sim }: SimulationPanelProps) 
           return { id: s.id, name: s.name, value: n / scale, display: String(n) }
         })}
       />
+
+      <p className="panel-note sim-explainer">
+        Drop players into any state and watch them move, one week at a time.
+        Each player rolls their own dice against the transition
+        probabilities &mdash; so unlike the exact forecast further down,
+        results wobble from run to run, exactly the way a real cohort does.
+      </p>
     </div>
   )
 }

@@ -17,14 +17,11 @@ and transitions on an editable canvas, then run calculators for:
   (how many weeks the starting cohort stuck around before reaching the
   output state, computed from an acquisition-free shadow run so it isn't
   skewed by later arrivals) — both update live alongside the simulation
-- **Diagnostics** — per-state stickiness (self-loop probability), top
-  outbound transition, and drop-off rate into a chosen risk state
-- **N-step forecast** — project the state distribution forward from a
-  starting mix
-- **Absorption** — absorption probabilities and expected time to churn for
-  chains with absorbing states
-- **Steady state** — the long-run equilibrium distribution for chains without
-  absorbing states
+- **N-step forecast** — project the state distribution forward N weeks,
+  starting everyone in whichever state is set as the input above
+- **Steady state** — the long-run equilibrium distribution; for a chain with
+  an absorbing state this trends toward 100% there, showing that everyone
+  gets there eventually
 
 **Live site:** https://ugurkc.github.io/markov-transitions/
 

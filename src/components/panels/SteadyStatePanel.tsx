@@ -18,9 +18,10 @@ export function SteadyStatePanel({ chain, matrix }: { chain: Chain; matrix: Matr
     <div className="panel">
       <h3>Steady state</h3>
       <p className="panel-note">
-        This chain has no absorbing states, so probability keeps circulating — in
-        the long run it settles into a stationary mix, regardless of where players
-        start.
+        Run this chain forward forever: what fraction of players end up in each
+        state, no matter where they started? For a chain with an absorbing
+        state like Churned, that number trends toward 100% there &mdash;
+        everyone gets there eventually, it&rsquo;s just a question of when.
       </p>
       {multipleClosed ? (
         <p className="inline-warning">

@@ -177,32 +177,34 @@ function App() {
                 is 100% self-loop; there&rsquo;s no way back out.
               </p>
               <p>
-                Whenever your chain has at least one absorbing state, the tool
-                swaps in the <strong>Absorption</strong> panel, which answers
-                two questions every retention team actually cares about: if a
-                player is standing in a given state right now, what&rsquo;s
-                the chance they eventually churn &mdash; and how long do they
-                have left?
+                Run the simulation on this preset and look at the{' '}
+                <strong>Customer lifetime</strong> histogram in the Retention
+                section on the right. It buckets the starting cohort by
+                exactly how many weeks it took each of them to land in
+                Churned &mdash; the same question every retention team
+                actually cares about, answered player by player instead of
+                as one averaged number.
               </p>
               <p>
-                For this preset, the honest answer to the first question is:
-                everyone eventually churns, 100%, no exceptions &mdash;
-                because Churned is the only door that never opens back up.
-                What differs is the <em>when</em>. A brand-new player in
-                Tutorial has, on average, about <strong>6 weeks</strong> left
-                before they&rsquo;re gone. Someone who&rsquo;s already made it
-                to Leveling or Endgame buys a little more time &mdash;
-                roughly <strong>6.7 weeks</strong> on average &mdash; because
-                they&rsquo;ve already proven they&rsquo;re a bit stickier
-                than the average new arrival.
+                For this preset, the honest answer is: everyone eventually
+                churns, 100%, no exceptions &mdash; Churned is the only door
+                that never opens back up. What differs is the <em>when</em>.
+                A cohort starting in Tutorial averages about{' '}
+                <strong>6 weeks</strong> before they&rsquo;re gone, spread out
+                across the histogram rather than landing on one week. Zero
+                out Tutorial&rsquo;s starting population and put everyone in
+                Leveling or Endgame instead, and that same histogram shifts
+                right &mdash; those players buy a little more time, roughly{' '}
+                <strong>6.7 weeks</strong> on average, because they&rsquo;ve
+                already proven they&rsquo;re a bit stickier than a brand-new
+                arrival.
               </p>
               <p>
-                Try it yourself: open the Absorption panel, change the
-                starting state, and watch the expected-weeks number move.
-                Then nudge Endgame&rsquo;s self-loop probability up in the
-                matrix table and watch that number stretch even further.
-                That&rsquo;s the whole game of retention work, distilled into
-                one slider.
+                Try it yourself: make that starting-population change, rerun
+                the simulation, and watch the histogram move. Then nudge
+                Endgame&rsquo;s self-loop probability up in the matrix table
+                and rerun again &mdash; that&rsquo;s the whole game of
+                retention work, distilled into one number in one table.
               </p>
             </section>
 
@@ -269,9 +271,8 @@ function App() {
                 genuinely useful forecasting tool. Natural next steps from
                 there include splitting states by acquisition channel or
                 platform, modeling seasonal shifts by re-estimating the
-                matrix month over month, or feeding the Absorption
-                panel&rsquo;s expected-time numbers straight into a
-                lifetime-value model.
+                matrix month over month, or feeding the customer-lifetime
+                numbers straight into a lifetime-value model.
               </p>
               <p>
                 If you build something with this, or find a bug, the source
