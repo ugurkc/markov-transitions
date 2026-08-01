@@ -510,8 +510,10 @@ a {
 
 /* --- Simulation --- */
 
-/* Sits above the edges inside the flow container and mirrors React Flow's
-   own pan/zoom transform, so tokens stay glued to the graph. */
+/* Mirrors React Flow's own pan/zoom transform so tokens stay glued to the
+   graph. Sits above the edges but below the nodes: arriving players slide
+   under their destination — reading as absorbed into it — instead of parking
+   on top of the population count. */
 .sim-overlay {
   position: absolute;
   inset: 0;
@@ -519,13 +521,47 @@ a {
   height: 100%;
   overflow: visible;
   pointer-events: none;
-  z-index: 5;
+  z-index: 2;
 }
 
 .sim-dot {
   fill: var(--accent);
   stroke: var(--surface);
   stroke-width: 1.2;
+}
+
+/* Outlined rather than boxed, so the count stays legible over edges and the
+   dotted background without a plate that would crowd the graph. */
+.sim-flow-label {
+  fill: var(--accent-strong);
+  stroke: var(--surface);
+  stroke-width: 3.5px;
+  paint-order: stroke;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Live population, shown inside each state while a cohort is loaded. */
+.state-count {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 3px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.state-count-unit {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .sim-panel {

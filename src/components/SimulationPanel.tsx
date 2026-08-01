@@ -101,7 +101,7 @@ export function SimulationPanel({ chain, sim }: SimulationPanelProps) {
 
       <DistributionBars
         items={chain.states.map((s, i) => {
-          const n = sim.counts[i] ?? 0
+          const n = sim.displayCounts[i] ?? 0
           return { id: s.id, name: s.name, value: n / scale, display: String(n) }
         })}
       />

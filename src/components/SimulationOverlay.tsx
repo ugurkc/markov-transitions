@@ -15,7 +15,9 @@ interface SimulationOverlayProps {
 /** Most tokens drawn for a single move — a crowd reads as a crowd well before this. */
 const MAX_DOTS_PER_MOVE = 10
 /** How far apart trailing tokens sit along the path. */
-const DOT_STAGGER = 0.05
+const DOT_STAGGER = 0.045
+/** How far off the path the flow count sits, clear of the probability pill. */
+const LABEL_OFFSET = 21
 
 /** Ease-in-out so players accelerate away and settle into the target. */
 const smoothstep = (t: number) => t * t * (3 - 2 * t)
@@ -56,6 +58,8 @@ export function SimulationOverlay({
   const forward = new Set(chain.transitions.map((t) => `${t.from}->${t.to}`))
 
   const dots: { key: string; x: number; y: number; r: number }[] = []
+  const labels: { key: string; x: number; y: number; count: number }[] = []
+
   if (visible) {
     for (const move of moves) {
       const fromState = chain.states[move.from]
@@ -66,20 +70,47 @@ export function SimulationOverlay({
       if (!s || !t) continue
 
       const selfLoop = move.from === move.to
+      const hasReverse = !selfLoop && forward.has(`${toState.id}->${fromState.id}`)
+      // Travellers run centre-to-centre so they are seen arriving *inside* the
+      // destination instead of stopping short at its border. Self-loops keep
+      // the drawn arc: those players never leave, and routing them through the
+      // node would just scribble over its own population count.
       const geom = edgeGeometry(s, t, {
         selfLoop,
-        hasReverse: !selfLoop && forward.has(`${toState.id}->${fromState.id}`),
+        hasReverse,
+        endpoints: selfLoop ? 'border' : 'center',
       })
+      // Counts ride the drawn edge, so they stay clear of node interiors.
+      const labelGeom = selfLoop ? geom : edgeGeometry(s, t, { selfLoop, hasReverse })
 
       const n = Math.min(move.count, MAX_DOTS_PER_MOVE)
+      // Every token, including the last of a staggered trail, completes its
+      // trip within the period — otherwise the stragglers get cut off when
+      // the next period's moves take over.
+      const span = Math.max(0.2, 1 - (n - 1) * DOT_STAGGER)
       // Bigger flows get slightly fatter tokens, so a 200-player stream still
       // reads as heavier than a 3-player trickle once both are dot-capped.
       const r = 3.2 + Math.min(2.6, Math.log2(move.count + 1) * 0.6)
       for (let k = 0; k < n; k++) {
-        const t01 = Math.max(0, Math.min(1, progress - k * DOT_STAGGER))
+        const t01 = Math.max(0, Math.min(1, (progress - k * DOT_STAGGER) / span))
         const p = pointAt(geom, smoothstep(t01))
         dots.push({ key: `${move.from}-${move.to}-${k}`, x: p.x, y: p.y, r })
       }
+
+      // Offset the count perpendicular to the path so it clears the
+      // probability pill that already sits at the midpoint.
+      const mid = pointAt(labelGeom, 0.5)
+      const before = pointAt(labelGeom, 0.46)
+      const after = pointAt(labelGeom, 0.54)
+      const dx = after.x - before.x
+      const dy = after.y - before.y
+      const len = Math.hypot(dx, dy) || 1
+      labels.push({
+        key: `${move.from}-${move.to}`,
+        x: mid.x + (-dy / len) * LABEL_OFFSET,
+        y: mid.y + (dx / len) * LABEL_OFFSET,
+        count: move.count,
+      })
     }
   }
 
@@ -90,6 +121,18 @@ export function SimulationOverlay({
       <g transform={`translate(${tx}, ${ty}) scale(${zoom})`}>
         {dots.map((d) => (
           <circle key={d.key} className="sim-dot" cx={d.x} cy={d.y} r={d.r} />
+        ))}
+        {labels.map((l) => (
+          <text
+            key={l.key}
+            className="sim-flow-label"
+            x={l.x}
+            y={l.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
+            {l.count}
+          </text>
         ))}
       </g>
     </svg>

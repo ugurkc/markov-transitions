@@ -20,6 +20,13 @@ export interface EdgeGeomOptions {
   selfLoop: boolean
   /** True when a transition in the opposite direction also exists. */
   hasReverse: boolean
+  /**
+   * Where the path starts and stops. Edges stop at the node border so the
+   * arrowhead lands cleanly; travelling players run centre-to-centre so they
+   * are seen arriving *inside* the destination rather than winking out at
+   * its edge. Defaults to `'border'`.
+   */
+  endpoints?: 'border' | 'center'
 }
 
 const SELF_LOOP_RADIUS = 44
@@ -48,20 +55,22 @@ export function borderPoint(rect: Rect, tx: number, ty: number, pad = BORDER_PAD
  * the node's right side.
  */
 export function edgeGeometry(s: Rect, t: Rect, opts: EdgeGeomOptions): EdgeGeom {
+  const toCenter = opts.endpoints === 'center'
+
   if (opts.selfLoop) {
     const x = s.cx + s.w / 2
     const r = SELF_LOOP_RADIUS
     return {
       kind: 'cubic',
-      a: { x, y: s.cy - 9 },
+      a: toCenter ? { x: s.cx, y: s.cy } : { x, y: s.cy - 9 },
       c1: { x: x + r, y: s.cy - r * 0.9 },
       c2: { x: x + r, y: s.cy + r * 0.9 },
-      b: { x, y: s.cy + 9 },
+      b: toCenter ? { x: s.cx, y: s.cy } : { x, y: s.cy + 9 },
     }
   }
 
-  const a = borderPoint(s, t.cx, t.cy)
-  const b = borderPoint(t, s.cx, s.cy)
+  const a = toCenter ? { x: s.cx, y: s.cy } : borderPoint(s, t.cx, t.cy)
+  const b = toCenter ? { x: t.cx, y: t.cy } : borderPoint(t, s.cx, s.cy)
 
   if (!opts.hasReverse) return { kind: 'line', a, b }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   advancePos,
+  lerpCounts,
   mulberry32,
   sampleDestination,
   stepPopulation,
@@ -47,6 +48,35 @@ describe('advancePos', () => {
   })
   it('ignores negative deltas rather than rewinding mid-run', () => {
     expect(advancePos(4, -50, 1200, 12)).toBe(4)
+  })
+})
+
+describe('lerpCounts', () => {
+  it('returns the start counts at t = 0 and the end counts at t = 1', () => {
+    expect(lerpCounts([10, 0, 5], [0, 12, 3], 0)).toEqual([10, 0, 5])
+    expect(lerpCounts([10, 0, 5], [0, 12, 3], 1)).toEqual([0, 12, 3])
+  })
+  it('keeps every value a whole number mid-transition', () => {
+    const out = lerpCounts([10, 0, 5], [0, 12, 3], 0.37)
+    expect(out.every(Number.isInteger)).toBe(true)
+  })
+  it('conserves the population at every point of the transition', () => {
+    const a = [37, 11, 0, 52]
+    const b = [4, 26, 33, 37]
+    for (let t = 0; t <= 1.0001; t += 0.05) {
+      const out = lerpCounts(a, b, t)
+      expect(out.reduce((x, y) => x + y, 0)).toBe(100)
+    }
+  })
+  it('never produces a negative count', () => {
+    const out = lerpCounts([1, 99], [99, 1], 0.5)
+    expect(out.every((v) => v >= 0)).toBe(true)
+  })
+  it('moves each state monotonically toward its destination', () => {
+    const mid = lerpCounts([100, 0], [0, 100], 0.5)
+    expect(mid[0]).toBeLessThan(100)
+    expect(mid[0]).toBeGreaterThan(0)
+    expect(mid[0] + mid[1]).toBe(100)
   })
 })
 

@@ -6,6 +6,8 @@ export interface StateNodeData {
   name: string
   invalid: boolean
   rowSum: number
+  /** Live simulated population; omitted when no cohort is loaded. */
+  count?: number
   onRename: (name: string) => void
 }
 
@@ -47,6 +49,14 @@ export function StateNode({ data }: NodeProps) {
         />
       ) : (
         <span>{d.name}</span>
+      )}
+      {d.count !== undefined && (
+        <div className="state-count">
+          {d.count}
+          <span className="state-count-unit">
+            {d.count === 1 ? 'player' : 'players'}
+          </span>
+        </div>
       )}
       {d.invalid && <div className="row-sum-badge">Σ = {d.rowSum.toFixed(2)}</div>}
     </div>

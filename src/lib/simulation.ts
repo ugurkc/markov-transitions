@@ -35,6 +35,29 @@ export function advancePos(
   return Math.max(0, Math.min(lastPeriod, pos + step))
 }
 
+/**
+ * Blend two population snapshots for display partway through a period.
+ *
+ * Uses largest-remainder apportionment rather than plain rounding so the
+ * on-screen numbers stay whole *and* keep adding up to the same total — a
+ * cohort that briefly showed 101 of 100 players would undermine the whole
+ * point of watching individuals move.
+ */
+export function lerpCounts(a: number[], b: number[], t: number): number[] {
+  const raw = a.map((v, i) => v + ((b[i] ?? 0) - v) * t)
+  const total = Math.round(raw.reduce((s, v) => s + v, 0))
+  const out = raw.map((v) => Math.floor(v))
+  let remainder = total - out.reduce((s, v) => s + v, 0)
+  const byFraction = raw
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((x, y) => y.frac - x.frac)
+  for (let k = 0; k < byFraction.length && remainder > 0; k++) {
+    out[byFraction[k].i]++
+    remainder--
+  }
+  return out
+}
+
 /** One period's worth of players travelling from one state to another. */
 export interface Move {
   from: number

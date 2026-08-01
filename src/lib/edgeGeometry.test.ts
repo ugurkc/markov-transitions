@@ -45,6 +45,44 @@ describe('edgeGeometry', () => {
   })
 })
 
+describe('edgeGeometry with centre endpoints', () => {
+  it('starts and ends at the node centres, not the borders', () => {
+    const g = edgeGeometry(rect(0, 0), rect(400, 0), {
+      selfLoop: false,
+      hasReverse: false,
+      endpoints: 'center',
+    })
+    expect(pointAt(g, 0)).toEqual({ x: 0, y: 0 })
+    expect(pointAt(g, 1)).toEqual({ x: 400, y: 0 })
+  })
+  it('still ends inside the node when the pair is bowed', () => {
+    const g = edgeGeometry(rect(0, 0), rect(400, 0), {
+      selfLoop: false,
+      hasReverse: true,
+      endpoints: 'center',
+    })
+    expect(pointAt(g, 1).x).toBeCloseTo(400, 9)
+    expect(pointAt(g, 1).y).toBeCloseTo(0, 9)
+    // The bow still lifts the middle off the chord.
+    expect(Math.abs(pointAt(g, 0.5).y)).toBeGreaterThan(0)
+  })
+  it('returns a self-loop to the node centre', () => {
+    const g = edgeGeometry(rect(50, 60), rect(50, 60), {
+      selfLoop: true,
+      hasReverse: false,
+      endpoints: 'center',
+    })
+    expect(pointAt(g, 0)).toEqual({ x: 50, y: 60 })
+    expect(pointAt(g, 1)).toEqual({ x: 50, y: 60 })
+    expect(pointAt(g, 0.5).x).toBeGreaterThan(50)
+  })
+  it('defaults to border endpoints when unspecified', () => {
+    const border = edgeGeometry(rect(0, 0), rect(400, 0), { selfLoop: false, hasReverse: false })
+    expect(pointAt(border, 0).x).toBeGreaterThan(0)
+    expect(pointAt(border, 1).x).toBeLessThan(400)
+  })
+})
+
 describe('pathD', () => {
   it('emits an SVG line command', () => {
     const g = edgeGeometry(rect(0, 0), rect(400, 0), { selfLoop: false, hasReverse: false })

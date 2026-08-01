@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Chain } from '../lib/types'
 import { buildMatrix, validateChain } from '../lib/chain'
-import { advancePos, mulberry32, runSimulation } from '../lib/simulation'
+import { advancePos, lerpCounts, mulberry32, runSimulation } from '../lib/simulation'
 import type { Move, SimFrame } from '../lib/simulation'
 
 /** Milliseconds a single period takes to animate. */
@@ -28,6 +28,11 @@ export interface Simulation {
   initialCounts: number[]
   /** Population per state at the displayed period. */
   counts: number[]
+  /**
+   * Population blended toward the next period by `progress`, so the numbers
+   * shown on the nodes drain and fill in step with the travelling players.
+   */
+  displayCounts: number[]
   /** Moves leaving the displayed period — what the overlay animates. */
   moves: Move[]
   setCount: (stateId: string, n: number) => void
@@ -119,6 +124,11 @@ export function useSimulation(chain: Chain): Simulation {
   const period = Math.max(0, Math.min(Math.floor(pos), lastPeriod))
   const progress = pos - period
 
+  const counts = frames ? frames[period].counts : initialCounts
+  const displayCounts = frames
+    ? lerpCounts(counts, frames[period + 1]?.counts ?? counts, progress)
+    : initialCounts
+
   const setCount = useCallback((stateId: string, n: number) => {
     setCountsById((prev) => ({
       ...prev,
@@ -159,7 +169,8 @@ export function useSimulation(chain: Chain): Simulation {
     periods,
     speed,
     initialCounts,
-    counts: frames ? frames[period].counts : initialCounts,
+    counts,
+    displayCounts,
     moves: frames ? frames[period].moves : [],
     setCount,
     setPeriods,
