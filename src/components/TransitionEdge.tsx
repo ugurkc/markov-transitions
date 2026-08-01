@@ -43,6 +43,7 @@ export function TransitionEdge(props: EdgeProps) {
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
           }}
           onClick={() => {
+            if (editing) return
             setDraft(String(d.probability))
             setEditing(true)
           }}

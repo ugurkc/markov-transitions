@@ -22,6 +22,7 @@ export function StateNode({ data }: NodeProps) {
       className={`state-node${d.invalid ? ' invalid' : ''}`}
       onDoubleClick={(e) => {
         e.stopPropagation()
+        if (editing) return
         setDraft(d.name)
         setEditing(true)
       }}

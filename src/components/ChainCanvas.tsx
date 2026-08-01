@@ -168,6 +168,7 @@ function ChainCanvasInner({ chain, dispatch }: ChainCanvasProps) {
       if (!window.confirm(`Load "${preset.name}"? This replaces the current chain.`)) return
       setPresetId(id)
       setSelected(new Set())
+      measuredRef.current.clear()
       dispatch({ type: 'loadChain', chain: structuredClone(preset) })
     },
     [dispatch],
