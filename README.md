@@ -13,7 +13,7 @@ and transitions on an editable canvas, then run calculators for:
 - **Steady state** — the long-run equilibrium distribution for chains without
   absorbing states
 
-**Live site:** _(filled in after first deploy — see Task 14)_
+**Live site:** https://ugurkc.github.io/markov-transitions/
 
 ## Local development
 

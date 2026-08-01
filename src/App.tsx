@@ -3,8 +3,7 @@ import { Placeholder } from './components/Placeholder'
 import { CalculatorsSection } from './components/panels/CalculatorsSection'
 import { useChain } from './state/useChain'
 
-// PLACEHOLDER — Task 14 replaces REPLACE_OWNER with the real GitHub owner.
-const REPO_URL = 'https://github.com/REPLACE_OWNER/markov-transitions'
+const REPO_URL = 'https://github.com/ugurkc/markov-transitions'
 
 function App() {
   const { chain, dispatch } = useChain()
