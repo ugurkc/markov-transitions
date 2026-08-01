@@ -4,8 +4,8 @@ An interactive article and tool for modeling player lifecycles — onboarding,
 engagement, churn, and win-back — as Markov chains. Build a chain of states
 and transitions on an editable canvas, then run calculators for:
 
-- **Diagnostics** — validate the chain and flag issues (unreachable states,
-  rows that don't sum to 1, etc.)
+- **Diagnostics** — per-state stickiness (self-loop probability), top
+  outbound transition, and drop-off rate into a chosen risk state
 - **N-step forecast** — project the state distribution forward from a
   starting mix
 - **Absorption** — absorption probabilities and expected time to churn for
