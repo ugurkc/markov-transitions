@@ -32,6 +32,13 @@
   --danger-bg: #fef2f2;
   --danger-border: #fca5a5;
   --danger-soft: #fecaca;
+  /* Input-state green — the output side already has a natural home in the
+     danger/red tokens above, so only "entry" needs a new hue. */
+  --growth: #16a34a;
+  --growth-solid: #16a34a;
+  --growth-ink: #15803d;
+  --growth-bg: #f0fdf4;
+  --growth-border: #86efac;
   --edge-line: #a3aab8;
   --handle-fill: #b6bdc9;
   --handle-ring: #ffffff;
@@ -64,6 +71,10 @@
     --danger-bg: #3a1a1a;
     --danger-border: #7f1d1d;
     --danger-soft: rgba(248, 113, 113, 0.35);
+    --growth: #4ade80;
+    --growth-ink: #86efac;
+    --growth-bg: #14261a;
+    --growth-border: #1c5834;
     --edge-line: #565c68;
     --handle-fill: #6b7280;
     --handle-ring: #16181e;
@@ -93,6 +104,10 @@
   --danger-bg: #3a1a1a;
   --danger-border: #7f1d1d;
   --danger-soft: rgba(248, 113, 113, 0.35);
+  --growth: #4ade80;
+  --growth-ink: #86efac;
+  --growth-bg: #14261a;
+  --growth-border: #1c5834;
   --edge-line: #565c68;
   --handle-fill: #6b7280;
   --handle-ring: #16181e;
@@ -457,6 +472,18 @@ a {
   box-shadow: 0 0 0 3px var(--danger-soft), var(--shadow-sm);
 }
 
+/* Slight wash + tinted border — enough to read as "the entry point" or "the
+   exit point" at a glance without shouting over the rest of the graph. */
+.state-node--input {
+  background: var(--growth-bg);
+  border-color: var(--growth-border);
+}
+
+.state-node--output {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
 .state-node input {
   width: 90px;
   font: inherit;
@@ -478,6 +505,28 @@ a {
   font-weight: 600;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
+}
+
+.endpoint-badge {
+  position: absolute;
+  top: -11px;
+  left: -12px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.endpoint-badge--input {
+  background: var(--growth-solid);
+}
+
+.endpoint-badge--output {
+  background: var(--danger-solid);
 }
 
 .edge-label {
@@ -570,8 +619,26 @@ a {
   letter-spacing: 0.02em;
 }
 
-.sim-panel {
+/* Simulation settings on the left, the retention chart on the right, sharing
+   a row so they read as one connected setup-and-result pair. Stacks on
+   narrow screens where there isn't room to keep them side by side. */
+.sim-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
   margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .sim-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sim-panel,
+.retention-panel {
+  margin-top: 0;
 }
 
 .sim-group-label {
@@ -581,6 +648,36 @@ a {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.sim-endpoints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 16px;
+  margin: 8px 0 4px;
+}
+
+.sim-endpoints .field {
+  margin: 0;
+}
+
+.sim-input-rate input {
+  width: 84px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
+
+.sim-input-rate input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .sim-inputs {
@@ -695,6 +792,53 @@ a {
   font-size: 13px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Retention chart --- */
+
+.retention-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 8px;
+}
+
+.retention-axis {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.retention-tick {
+  fill: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.retention-area {
+  fill: var(--accent-faint);
+}
+
+.retention-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.retention-dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.retention-empty {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1.5px dashed var(--placeholder-border);
+  border-radius: var(--radius-md);
+  background: var(--placeholder-bg);
+  text-align: center;
 }
 
 /* --- Transition matrix --- */

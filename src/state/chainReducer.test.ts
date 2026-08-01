@@ -32,6 +32,35 @@ describe('chainReducer', () => {
     expect(c.states.map((s) => s.id)).not.toContain('leveling')
     expect(c.transitions.every((t) => t.from !== 'leveling' && t.to !== 'leveling')).toBe(true)
   })
+  it('deleteState clears inputStateId/outputStateId when they point at the deleted state', () => {
+    const withEndpoints = { ...funnelPreset, inputStateId: 'tutorial', outputStateId: 'churned' }
+    const c = chainReducer(withEndpoints, { type: 'deleteState', id: 'tutorial' })
+    expect(c.inputStateId).toBeNull()
+    expect(c.outputStateId).toBe('churned')
+    const c2 = chainReducer(withEndpoints, { type: 'deleteState', id: 'churned' })
+    expect(c2.inputStateId).toBe('tutorial')
+    expect(c2.outputStateId).toBeNull()
+  })
+  it('deleteState leaves inputStateId/outputStateId alone for an unrelated state', () => {
+    const withEndpoints = { ...funnelPreset, inputStateId: 'tutorial', outputStateId: 'churned' }
+    const c = chainReducer(withEndpoints, { type: 'deleteState', id: 'leveling' })
+    expect(c.inputStateId).toBe('tutorial')
+    expect(c.outputStateId).toBe('churned')
+  })
+  it('setInputState and setOutputState assign the endpoint and flip the chain to custom', () => {
+    let c = chainReducer(funnelPreset, { type: 'setInputState', id: 'tutorial' })
+    expect(c.inputStateId).toBe('tutorial')
+    expect(c.id).toBe('custom')
+    c = chainReducer(c, { type: 'setOutputState', id: 'churned' })
+    expect(c.outputStateId).toBe('churned')
+    expect(c.id).toBe('custom')
+  })
+  it('setInputState and setOutputState accept null to clear the endpoint', () => {
+    const withEndpoints = { ...funnelPreset, inputStateId: 'tutorial', outputStateId: 'churned' }
+    const c = chainReducer(withEndpoints, { type: 'setInputState', id: null })
+    expect(c.inputStateId).toBeNull()
+    expect(c.outputStateId).toBe('churned')
+  })
   it('setProbability clamps to [0, 1]', () => {
     const c = chainReducer(funnelPreset, { type: 'setProbability', id: 't-l', probability: 1.5 })
     expect(c.transitions.find((t) => t.id === 't-l')!.probability).toBe(1)

@@ -10,6 +10,8 @@ export type ChainAction =
   | { type: 'setProbability'; id: string; probability: number }
   | { type: 'deleteTransition'; id: string }
   | { type: 'setCell'; from: string; to: string; probability: number }
+  | { type: 'setInputState'; id: string | null }
+  | { type: 'setOutputState'; id: string | null }
   | { type: 'loadChain'; chain: Chain }
 
 const clamp01 = (p: number) => Math.max(0, Math.min(1, p))
@@ -51,6 +53,8 @@ function reduce(chain: Chain, action: ChainAction): Chain {
         ...chain,
         states: chain.states.filter((s) => s.id !== action.id),
         transitions: chain.transitions.filter((t) => t.from !== action.id && t.to !== action.id),
+        inputStateId: chain.inputStateId === action.id ? null : chain.inputStateId,
+        outputStateId: chain.outputStateId === action.id ? null : chain.outputStateId,
       }
     case 'addTransition': {
       if (chain.transitions.some((t) => t.from === action.from && t.to === action.to)) return chain
@@ -99,6 +103,10 @@ function reduce(chain: Chain, action: ChainAction): Chain {
           t.id === existing.id ? { ...t, probability: p } : t),
       }
     }
+    case 'setInputState':
+      return { ...chain, inputStateId: action.id }
+    case 'setOutputState':
+      return { ...chain, outputStateId: action.id }
     case 'loadChain':
       return action.chain
   }

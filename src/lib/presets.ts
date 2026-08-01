@@ -21,6 +21,8 @@ export const funnelPreset: Chain = {
     { id: 'e-c', from: 'endgame', to: 'churned', probability: 0.15 },
     { id: 'c-c', from: 'churned', to: 'churned', probability: 1 },
   ],
+  inputStateId: 'tutorial',
+  outputStateId: 'churned',
 }
 
 export const winBackPreset: Chain = {
@@ -47,6 +49,8 @@ export const winBackPreset: Chain = {
     { id: 'r-l', from: 'returning', to: 'leveling', probability: 0.7 },
     { id: 'r-c', from: 'returning', to: 'churned', probability: 0.3 },
   ],
+  inputStateId: 'tutorial',
+  outputStateId: 'churned',
 }
 
 export const presets = [funnelPreset, winBackPreset]

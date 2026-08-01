@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  activePopulationSeries,
   advancePos,
   lerpCounts,
   mulberry32,
@@ -249,5 +250,35 @@ describe('runSimulation with acquisition', () => {
     const a = runSimulation([9, 9, 9], p, 6, mulberry32(77), [2, 0, 1])
     const b = runSimulation([9, 9, 9], p, 6, mulberry32(77), [2, 0, 1])
     expect(a).toEqual(b)
+  })
+})
+
+describe('activePopulationSeries', () => {
+  it('returns total minus the output state, per frame', () => {
+    const frames = runSimulation([10, 0, 0], identity3, 0, mulberry32(1))
+    expect(activePopulationSeries(frames, 2)).toEqual([10])
+  })
+  it('tracks players draining into the output state over a run', () => {
+    const p = [
+      [0.5, 0.5],
+      [0, 1],
+    ]
+    const frames = runSimulation([20, 0], p, 5, mulberry32(3))
+    const series = activePopulationSeries(frames, 1)
+    expect(series[0]).toBe(20)
+    // Monotonically non-increasing: state 1 is absorbing, so nobody returns
+    // to "active" once counted out.
+    for (let i = 1; i < series.length; i++) {
+      expect(series[i]).toBeLessThanOrEqual(series[i - 1])
+    }
+    expect(series[series.length - 1]).toBe(frames[frames.length - 1].counts[0])
+  })
+  it('reflects acquisition growing the active count', () => {
+    const frames = runSimulation([0, 0], identity3.slice(0, 2).map((r) => r.slice(0, 2)), 3, mulberry32(1), [5, 0])
+    expect(activePopulationSeries(frames, 1)).toEqual([0, 5, 10, 15])
+  })
+  it('falls back to the raw total when the output index is not found', () => {
+    const frames = runSimulation([4, 6], identity3.slice(0, 2).map((r) => r.slice(0, 2)), 2, mulberry32(1))
+    expect(activePopulationSeries(frames, -1)).toEqual([10, 10, 10])
   })
 })

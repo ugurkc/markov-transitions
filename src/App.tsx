@@ -1,5 +1,6 @@
 import { ChainCanvas } from './components/ChainCanvas'
 import { MatrixPanel } from './components/MatrixPanel'
+import { RetentionChart } from './components/RetentionChart'
 import { Sidebar } from './components/Sidebar'
 import { SimulationPanel } from './components/SimulationPanel'
 import { ThemeToggle } from './components/ThemeToggle'
@@ -150,7 +151,10 @@ function App() {
           <section className="tool-section" id="try-it">
             <h2>Try it: build your own player lifecycle</h2>
             <ChainCanvas chain={chain} dispatch={dispatch} theme={theme} sim={sim} />
-            <SimulationPanel chain={chain} sim={sim} />
+            <div className="sim-layout">
+              <SimulationPanel chain={chain} dispatch={dispatch} sim={sim} />
+              <RetentionChart chain={chain} sim={sim} />
+            </div>
             <MatrixPanel chain={chain} dispatch={dispatch} />
             <CalculatorsSection chain={chain} />
           </section>

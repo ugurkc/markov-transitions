@@ -52,8 +52,7 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   const validation = useMemo(() => validateChain(chain), [chain])
 
   const showCounts =
-    sim.runnable &&
-    (sim.initialCounts.some((n) => n > 0) || sim.acquisition.some((n) => n > 0))
+    sim.runnable && (sim.initialCounts.some((n) => n > 0) || sim.inputRate > 0)
 
   const nodes = useMemo<Node[]>(
     () =>
@@ -68,10 +67,21 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
           invalid: validation.invalidStateIds.includes(s.id),
           rowSum: validation.rowSums[s.id] ?? 0,
           count: showCounts ? (sim.displayCounts[i] ?? 0) : undefined,
+          isInput: s.id === chain.inputStateId,
+          isOutput: s.id === chain.outputStateId,
           onRename: (name: string) => dispatch({ type: 'renameState', id: s.id, name }),
         },
       })),
-    [chain.states, selected, validation, dispatch, showCounts, sim.displayCounts],
+    [
+      chain.states,
+      chain.inputStateId,
+      chain.outputStateId,
+      selected,
+      validation,
+      dispatch,
+      showCounts,
+      sim.displayCounts,
+    ],
   )
 
   const edges = useMemo<Edge[]>(() => {
@@ -190,7 +200,14 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
     measuredRef.current.clear()
     dispatch({
       type: 'loadChain',
-      chain: saved ?? { id: 'custom', name: 'My chain', states: [], transitions: [] },
+      chain: saved ?? {
+        id: 'custom',
+        name: 'My chain',
+        states: [],
+        transitions: [],
+        inputStateId: null,
+        outputStateId: null,
+      },
     })
   }, [dispatch, chain.id])
 

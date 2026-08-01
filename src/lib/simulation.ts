@@ -158,3 +158,18 @@ export function runSimulation(
   frames.push({ counts, moves: [], arrivals: [] })
   return frames
 }
+
+/**
+ * "Still playing" per frame: everyone except whoever is currently in the
+ * output state. This is what the retention chart plots against the week
+ * number — it rises with acquisition and falls as players drain into output.
+ *
+ * An output index that isn't found (e.g. no output state chosen yet) returns
+ * the raw total for every frame, since nobody can be excluded.
+ */
+export function activePopulationSeries(frames: SimFrame[], outputIdx: number): number[] {
+  return frames.map((f) => {
+    const total = f.counts.reduce((a, b) => a + b, 0)
+    return outputIdx >= 0 ? total - (f.counts[outputIdx] ?? 0) : total
+  })
+}

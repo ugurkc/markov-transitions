@@ -4,11 +4,17 @@ An interactive article and tool for modeling player lifecycles — onboarding,
 engagement, churn, and win-back — as Markov chains. Build a chain of states
 and transitions on an editable canvas, then run calculators for:
 
-- **Cohort simulation** — drop whole players into states, optionally add
-  ongoing acquisition (new players joining a state every period), and run the
-  chain for N periods, animating each player's moves along the graph. Every
-  player samples the transition row individually (seeded PRNG, so runs are
-  reproducible), so results vary around the expected forecast
+- **Cohort simulation** — designate one state as the input (where new players
+  join) and one as the output (where players leave), painted green/red on the
+  canvas; drop whole players into states, optionally add an ongoing input
+  rate, and run the chain for N weeks, animating each player's moves along
+  the graph. Every player samples the transition row individually (seeded
+  PRNG, so runs are reproducible), so results vary around the expected
+  forecast. The simulation won't run until both an input and output state are
+  chosen
+- **Retention chart** — active-player curve (everyone not in the output
+  state) plotted against weeks elapsed, updating live alongside the
+  simulation
 - **Diagnostics** — per-state stickiness (self-loop probability), top
   outbound transition, and drop-off rate into a chosen risk state
 - **N-step forecast** — project the state distribution forward from a

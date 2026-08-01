@@ -8,6 +8,10 @@ export interface StateNodeData {
   rowSum: number
   /** Live simulated population; omitted when no cohort is loaded. */
   count?: number
+  /** True when this state is the simulation's designated entry point. */
+  isInput?: boolean
+  /** True when this state is the simulation's designated exit point. */
+  isOutput?: boolean
   onRename: (name: string) => void
 }
 
@@ -19,9 +23,14 @@ export function StateNode({ data }: NodeProps) {
     setEditing(false)
     if (draft.trim()) d.onRename(draft.trim())
   }
+  const modifiers =
+    (d.invalid ? ' invalid' : '') +
+    (d.isInput ? ' state-node--input' : '') +
+    (d.isOutput ? ' state-node--output' : '')
+
   return (
     <div
-      className={`state-node${d.invalid ? ' invalid' : ''}`}
+      className={`state-node${modifiers}`}
       onDoubleClick={(e) => {
         e.stopPropagation()
         if (editing) return
@@ -59,6 +68,8 @@ export function StateNode({ data }: NodeProps) {
         </div>
       )}
       {d.invalid && <div className="row-sum-badge">Σ = {d.rowSum.toFixed(2)}</div>}
+      {d.isInput && <div className="endpoint-badge endpoint-badge--input">IN</div>}
+      {d.isOutput && <div className="endpoint-badge endpoint-badge--output">OUT</div>}
     </div>
   )
 }
