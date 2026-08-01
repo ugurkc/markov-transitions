@@ -230,31 +230,58 @@ main {
   }
 }
 
-/* --- Article layout --- */
+/* --- Content layout: prose on the left, the live tool pinned on the right --- */
 
-/* Prose blocks sit in a 720px reading column that hugs the left edge of a
-   1100px-wide centered container; the tool section fills that same
-   container. Every section therefore shares one left edge at any viewport
-   width — independently auto-centering a 720px column and a 1100px column
-   in the same parent misaligns them whenever the parent is between the two
-   widths, which is what caused the previous inconsistent indentation. */
-.article {
-  max-width: 1148px;
-  margin: 0 auto;
+.content-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
   padding: 0 24px 32px;
 }
 
-.article > * {
+.article {
+  flex: 1 1 720px;
   max-width: 720px;
-}
-
-.article > .tool-section {
-  max-width: 1100px;
-  width: 100%;
+  min-width: 420px;
 }
 
 .article section {
   scroll-margin-top: 28px;
+}
+
+/* Pinned in the viewport as the article scrolls past, with its own
+   scrollbar once its content — canvas, sim, matrix, calculators — outgrows
+   the available height. Mirrors the TOC sidebar's own sticky recipe. */
+.tool-sidebar {
+  flex: 1 1 480px;
+  min-width: 480px;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 4px 24px 0;
+}
+
+/* Deliberately a higher breakpoint than the TOC sidebar's own (1099px): the
+   canvas and preset bar need more room than a bare two-column split would
+   leave once the TOC is still competing for width, so this collapses to a
+   single column earlier — while the TOC keeps hiding at its own threshold,
+   freeing extra room right up until that point. */
+@media (max-width: 1360px) {
+  .content-layout {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tool-sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    width: 100%;
+    padding: 0;
+    margin-top: 8px;
+  }
 }
 
 .article-header {
@@ -305,10 +332,6 @@ h2 {
 
 a {
   color: var(--accent);
-}
-
-.tool-section h2 {
-  margin-bottom: 6px;
 }
 
 .article-footer {
@@ -619,21 +642,14 @@ a {
   letter-spacing: 0.02em;
 }
 
-/* Simulation settings on the left, the retention chart on the right, sharing
-   a row so they read as one connected setup-and-result pair. Stacks on
-   narrow screens where there isn't room to keep them side by side. */
+/* Sim settings, then the retention chart, stacked — the tool sidebar itself
+   is the narrow column now, so there's no longer room to run these side by
+   side the way they could when the tool spanned the full page width. */
 .sim-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   margin-top: 16px;
-}
-
-@media (max-width: 760px) {
-  .sim-layout {
-    grid-template-columns: 1fr;
-  }
 }
 
 .sim-panel,
