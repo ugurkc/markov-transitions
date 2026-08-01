@@ -30,6 +30,9 @@ export interface EdgeGeomOptions {
 }
 
 const SELF_LOOP_RADIUS = 44
+/** Distance below the node's top edge the loop anchors to — roughly where
+ * the title text sits, clear of any content rendered below it. */
+const SELF_LOOP_TOP_OFFSET = 18
 const BOW = 26
 const BORDER_PAD = 3
 
@@ -59,13 +62,19 @@ export function edgeGeometry(s: Rect, t: Rect, opts: EdgeGeomOptions): EdgeGeom 
 
   if (opts.selfLoop) {
     const x = s.cx + s.w / 2
+    // Anchored near the top edge rather than the vertical centre. Nodes grow
+    // taller when they show extra content below the title (a live player
+    // count, an invalid-row badge); anchoring at the true centre would drag
+    // the loop down into whatever got added, so it's pinned to roughly where
+    // the title sits and stays clear regardless of how tall the node gets.
+    const anchorY = s.cy - s.h / 2 + SELF_LOOP_TOP_OFFSET
     const r = SELF_LOOP_RADIUS
     return {
       kind: 'cubic',
-      a: toCenter ? { x: s.cx, y: s.cy } : { x, y: s.cy - 9 },
-      c1: { x: x + r, y: s.cy - r * 0.9 },
-      c2: { x: x + r, y: s.cy + r * 0.9 },
-      b: toCenter ? { x: s.cx, y: s.cy } : { x, y: s.cy + 9 },
+      a: toCenter ? { x: s.cx, y: s.cy } : { x, y: anchorY - 9 },
+      c1: { x: x + r, y: anchorY - r * 0.9 },
+      c2: { x: x + r, y: anchorY + r * 0.9 },
+      b: toCenter ? { x: s.cx, y: s.cy } : { x, y: anchorY + 9 },
     }
   }
 

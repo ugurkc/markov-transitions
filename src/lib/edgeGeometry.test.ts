@@ -43,6 +43,27 @@ describe('edgeGeometry', () => {
     const g = edgeGeometry(rect(0, 0), rect(0, 0), { selfLoop: true, hasReverse: false })
     expect(g.kind).toBe('cubic')
   })
+  it('anchors a self-loop near the top of the node, not the vertical centre', () => {
+    // A node that has grown tall (e.g. a live player count rendered below
+    // the title) must not pull the loop down into that extra content — the
+    // anchor should stay pinned near the top edge regardless of height.
+    const short = edgeGeometry(rect(0, 0, 100, 40), rect(0, 0, 100, 40), {
+      selfLoop: true,
+      hasReverse: false,
+    })
+    // Same top edge as `short` (cy - h/2 = -20 for both), just a much taller
+    // box — as if a live player count had been added below the title.
+    const tall = edgeGeometry(rect(0, 40, 100, 120), rect(0, 40, 100, 120), {
+      selfLoop: true,
+      hasReverse: false,
+    })
+    expect(short.kind).toBe('cubic')
+    expect(tall.kind).toBe('cubic')
+    if (short.kind === 'cubic' && tall.kind === 'cubic') {
+      expect(tall.a.y).toBeCloseTo(short.a.y, 9)
+      expect(tall.b.y).toBeCloseTo(short.b.y, 9)
+    }
+  })
 })
 
 describe('edgeGeometry with centre endpoints', () => {
