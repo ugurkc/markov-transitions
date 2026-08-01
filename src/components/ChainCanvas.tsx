@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background,
   ConnectionMode,
@@ -41,7 +41,7 @@ interface ChainCanvasProps {
 
 function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, fitView } = useReactFlow()
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   // React Flow measures nodes and reports sizes via 'dimensions' changes. Since we
   // rebuild the nodes array from the chain on every render, we must echo those
@@ -50,6 +50,34 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   const measuredRef = useRef(new Map<string, { width: number; height: number }>())
 
   const validation = useMemo(() => validateChain(chain), [chain])
+
+  /** Re-frame after React has committed and React Flow has measured. */
+  const refit = useCallback(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => fitView({ duration: 0 })))
+  }, [fitView])
+
+  // The initial `fitView` runs against whatever size the canvas happened to
+  // be at mount, so a later layout change (window resize, the two-column
+  // breakpoint flipping) leaves nodes cropped outside the visible area.
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    let first = true
+    let raf = 0
+    const ro = new ResizeObserver(() => {
+      if (first) {
+        first = false // the observer fires once on attach; mount already fit.
+        return
+      }
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => fitView({ duration: 0 }))
+    })
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      cancelAnimationFrame(raf)
+    }
+  }, [fitView])
 
   const showCounts =
     sim.runnable && (sim.initialCounts.some((n) => n > 0) || sim.inputRate > 0)
@@ -181,16 +209,22 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
 
   // Your custom chain is saved separately from whichever chain is on screen
   // (see useChain), so switching tabs never loses it — no confirmation needed.
+  // Clicking the tab of the preset already on screen reloads it. A preset
+  // that has been edited flips the chain to `custom`, so an active preset tab
+  // always means an untouched preset — reloading it can only reset layout,
+  // and it doubles as the way out if a stored chain ever loads in a state the
+  // pickers can't express.
   const loadPreset = useCallback(
     (id: string) => {
       const preset = presets.find((p) => p.id === id)
-      if (!preset || chain.id === id) return
+      if (!preset) return
       flushCustomChain(chain)
       setSelected(new Set())
       measuredRef.current.clear()
       dispatch({ type: 'loadChain', chain: structuredClone(preset) })
+      refit()
     },
-    [dispatch, chain],
+    [dispatch, chain, refit],
   )
 
   const startCustom = useCallback(() => {
@@ -209,7 +243,8 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
         outputStateId: null,
       },
     })
-  }, [dispatch, chain.id])
+    refit()
+  }, [dispatch, chain.id, refit])
 
   return (
     <div>

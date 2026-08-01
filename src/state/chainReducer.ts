@@ -1,4 +1,4 @@
-import type { Chain } from '../lib/types'
+import type { Chain, StateNode } from '../lib/types'
 import { validateChain } from '../lib/chain'
 
 export type ChainAction =
@@ -15,6 +15,39 @@ export type ChainAction =
   | { type: 'loadChain'; chain: Chain }
 
 const clamp01 = (p: number) => Math.max(0, Math.min(1, p))
+
+/** Diagonal nudge applied when a new state would land exactly on another. */
+const STACK_OFFSET = 28
+
+/**
+ * Lowest unused "State N". Naming from `states.length + 1` reused a name that
+ * was still taken whenever a middle state had been deleted, leaving two rows
+ * in the matrix — and two options in the endpoint pickers — with identical
+ * labels and no way to tell them apart.
+ */
+function nextStateName(states: StateNode[]): string {
+  const taken = new Set(states.map((s) => s.name))
+  let n = 1
+  while (taken.has(`State ${n}`)) n++
+  return `State ${n}`
+}
+
+/**
+ * "+ Add state" always passes the canvas centre, so clicking it repeatedly
+ * used to pile states on one pixel — they looked like a single node until you
+ * dragged the top one away. Step off the pile instead.
+ */
+function freePosition(states: StateNode[], position: { x: number; y: number }) {
+  const occupied = (p: { x: number; y: number }) =>
+    states.some(
+      (s) => Math.abs(s.position.x - p.x) < 1 && Math.abs(s.position.y - p.y) < 1,
+    )
+  let p = { ...position }
+  for (let i = 0; i < states.length && occupied(p); i++) {
+    p = { x: p.x + STACK_OFFSET, y: p.y + STACK_OFFSET }
+  }
+  return p
+}
 
 export function chainReducer(chain: Chain, action: ChainAction): Chain {
   const next = reduce(chain, action)
@@ -34,13 +67,12 @@ export function chainReducer(chain: Chain, action: ChainAction): Chain {
 function reduce(chain: Chain, action: ChainAction): Chain {
   switch (action.type) {
     case 'addState': {
-      const n = chain.states.length + 1
       return {
         ...chain,
         states: [...chain.states, {
           id: crypto.randomUUID(),
-          name: `State ${n}`,
-          position: action.position,
+          name: nextStateName(chain.states),
+          position: freePosition(chain.states, action.position),
         }],
       }
     }

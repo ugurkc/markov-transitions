@@ -73,7 +73,14 @@ const randomSeed = () => Math.floor(Math.random() * 2 ** 31)
 
 export function useSimulation(chain: Chain): Simulation {
   const validation = useMemo(() => validateChain(chain), [chain])
-  const hasEndpoints = !!chain.inputStateId && !!chain.outputStateId
+
+  const inputIdx = chain.states.findIndex((s) => s.id === chain.inputStateId)
+  const outputIdx = chain.states.findIndex((s) => s.id === chain.outputStateId)
+  // Both endpoints must actually resolve to a state, not merely be set. An id
+  // left behind by a deleted state is truthy but resolves to -1, which would
+  // let the run proceed while retention silently fell back to the raw total
+  // and every lifetime bucket came out empty.
+  const hasEndpoints = inputIdx >= 0 && outputIdx >= 0
   const runnable = validation.valid && chain.states.length > 0 && hasEndpoints
 
   const [countsById, setCountsById] = useState<Record<string, number>>({})
@@ -92,9 +99,6 @@ export function useSimulation(chain: Chain): Simulation {
       ),
     [chain.states, countsById],
   )
-
-  const inputIdx = chain.states.findIndex((s) => s.id === chain.inputStateId)
-  const outputIdx = chain.states.findIndex((s) => s.id === chain.outputStateId)
 
   const acquisition = useMemo(() => {
     const a = chain.states.map(() => 0)

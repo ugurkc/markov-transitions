@@ -11,6 +11,40 @@ describe('chainReducer', () => {
     expect(c.states[0].name).toBe('State 1')
     expect(c.states[0].position).toEqual({ x: 10, y: 20 })
   })
+  it('addState never reuses a name that is already taken', () => {
+    // Deleting a middle state used to leave the counter pointing at a name
+    // that still existed, producing two states called "State 2".
+    const withGap = {
+      ...empty,
+      states: [
+        { id: 'x', name: 'State 2', position: { x: 0, y: 0 } },
+      ],
+    }
+    const c = chainReducer(withGap, { type: 'addState', position: { x: 500, y: 500 } })
+    const names = c.states.map((s) => s.name)
+    expect(new Set(names).size).toBe(names.length)
+    expect(names).toContain('State 1')
+  })
+  it('addState fills the lowest free slot rather than counting length', () => {
+    const withGap = {
+      ...empty,
+      states: [
+        { id: 'a', name: 'State 1', position: { x: 0, y: 0 } },
+        { id: 'b', name: 'State 3', position: { x: 10, y: 10 } },
+      ],
+    }
+    const c = chainReducer(withGap, { type: 'addState', position: { x: 500, y: 500 } })
+    expect(c.states[2].name).toBe('State 2')
+  })
+  it('addState offsets a new state rather than stacking it exactly on another', () => {
+    // "+ Add state" always passes the canvas centre, so repeated clicks used
+    // to pile invisible states on the same pixel.
+    let c = chainReducer(empty, { type: 'addState', position: { x: 100, y: 100 } })
+    c = chainReducer(c, { type: 'addState', position: { x: 100, y: 100 } })
+    c = chainReducer(c, { type: 'addState', position: { x: 100, y: 100 } })
+    const seen = new Set(c.states.map((s) => `${s.position.x},${s.position.y}`))
+    expect(seen.size).toBe(3)
+  })
   it('addTransition defaults probability to the remaining row mass', () => {
     let c = chainReducer(empty, { type: 'addState', position: { x: 0, y: 0 } })
     c = chainReducer(c, { type: 'addState', position: { x: 100, y: 0 } })

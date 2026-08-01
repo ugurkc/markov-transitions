@@ -1,27 +1,34 @@
 import { useEffect, useReducer, useRef } from 'react'
 import type { Chain } from '../lib/types'
 import { chainReducer } from './chainReducer'
-import { funnelPreset } from '../lib/presets'
+import { normalizeChain } from '../lib/chainStorage'
+import { funnelPreset, presets } from '../lib/presets'
 
 const STORAGE_KEY = 'markov-transitions:chain'
 const CUSTOM_STORAGE_KEY = 'markov-transitions:custom-chain'
 
-function loadInitial(): Chain {
+/**
+ * Everything read back from storage goes through `normalizeChain` — it was
+ * written by whatever version of the app the visitor last used, so it may be
+ * missing fields the code now requires, or be a half-written record.
+ */
+function readStored(key: string): Chain | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Chain
-  } catch { /* corrupt storage → fall through to preset */ }
-  return funnelPreset
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    return normalizeChain(JSON.parse(raw), presets)
+  } catch { /* unparseable → treat as absent */ }
+  return null
+}
+
+function loadInitial(): Chain {
+  return readStored(STORAGE_KEY) ?? funnelPreset
 }
 
 /** The user's own chain, saved separately from whichever chain is currently
  * on screen so it survives switching to a preset and back. */
 export function loadSavedCustomChain(): Chain | null {
-  try {
-    const raw = localStorage.getItem(CUSTOM_STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Chain
-  } catch { /* corrupt storage → treat as absent */ }
-  return null
+  return readStored(CUSTOM_STORAGE_KEY)
 }
 
 function persist(chain: Chain) {
