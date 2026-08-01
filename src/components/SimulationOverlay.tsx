@@ -2,11 +2,12 @@ import { useStore } from '@xyflow/react'
 import type { Chain } from '../lib/types'
 import { edgeGeometry, pointAt } from '../lib/edgeGeometry'
 import type { Rect } from '../lib/edgeGeometry'
-import type { Move } from '../lib/simulation'
+import type { Arrival, Move } from '../lib/simulation'
 
 interface SimulationOverlayProps {
   chain: Chain
   moves: Move[]
+  arrivals: Arrival[]
   /** 0..1 through the current period. */
   progress: number
   visible: boolean
@@ -18,6 +19,14 @@ const MAX_DOTS_PER_MOVE = 10
 const DOT_STAGGER = 0.045
 /** How far off the path the flow count sits, clear of the probability pill. */
 const LABEL_OFFSET = 21
+/** How far above the node the "+N joined" label floats. */
+const ARRIVAL_LABEL_OFFSET = 15
+/** Loosely scattered, rather than stacked dead-center, so a burst of new
+ * arrivals reads as a little crowd rather than one dot standing in for all. */
+const ARRIVAL_SCATTER: [number, number][] = [
+  [0, 0], [-7, 4], [6, -5], [-4, -6], [8, 5],
+  [-9, -1], [3, 8], [-2, -8], [9, -3], [-6, 7],
+]
 
 /** Ease-in-out so players accelerate away and settle into the target. */
 const smoothstep = (t: number) => t * t * (3 - 2 * t)
@@ -34,6 +43,7 @@ const smoothstep = (t: number) => t * t * (3 - 2 * t)
 export function SimulationOverlay({
   chain,
   moves,
+  arrivals,
   progress,
   visible,
 }: SimulationOverlayProps) {
@@ -57,8 +67,9 @@ export function SimulationOverlay({
 
   const forward = new Set(chain.transitions.map((t) => `${t.from}->${t.to}`))
 
-  const dots: { key: string; x: number; y: number; r: number }[] = []
+  const dots: { key: string; x: number; y: number; r: number; opacity: number }[] = []
   const labels: { key: string; x: number; y: number; count: number }[] = []
+  const arrivalLabels: { key: string; x: number; y: number; count: number }[] = []
 
   if (visible) {
     for (const move of moves) {
@@ -94,7 +105,7 @@ export function SimulationOverlay({
       for (let k = 0; k < n; k++) {
         const t01 = Math.max(0, Math.min(1, (progress - k * DOT_STAGGER) / span))
         const p = pointAt(geom, smoothstep(t01))
-        dots.push({ key: `${move.from}-${move.to}-${k}`, x: p.x, y: p.y, r })
+        dots.push({ key: `${move.from}-${move.to}-${k}`, x: p.x, y: p.y, r, opacity: 1 })
       }
 
       // Offset the count perpendicular to the path so it clears the
@@ -112,6 +123,37 @@ export function SimulationOverlay({
         count: move.count,
       })
     }
+
+    // New players have nowhere to travel *from* — they simply materialize in
+    // their destination, so they fade and grow into place rather than
+    // sliding in along a path.
+    for (const arrival of arrivals) {
+      const toState = chain.states[arrival.to]
+      if (!toState) continue
+      const t = rects.get(toState.id)
+      if (!t) continue
+
+      const eased = smoothstep(progress)
+      const n = Math.min(arrival.count, MAX_DOTS_PER_MOVE)
+      const r = 3.2 + Math.min(2.6, Math.log2(arrival.count + 1) * 0.6)
+      for (let k = 0; k < n; k++) {
+        const [ox, oy] = ARRIVAL_SCATTER[k % ARRIVAL_SCATTER.length]
+        dots.push({
+          key: `arrival-${arrival.to}-${k}`,
+          x: t.cx + ox,
+          y: t.cy + oy,
+          r: r * (0.4 + 0.6 * eased),
+          opacity: 0.15 + 0.85 * eased,
+        })
+      }
+
+      arrivalLabels.push({
+        key: `arrival-label-${arrival.to}`,
+        x: t.cx,
+        y: t.cy - t.h / 2 - ARRIVAL_LABEL_OFFSET,
+        count: arrival.count,
+      })
+    }
   }
 
   if (dots.length === 0) return null
@@ -120,7 +162,26 @@ export function SimulationOverlay({
     <svg className="sim-overlay" aria-hidden="true">
       <g transform={`translate(${tx}, ${ty}) scale(${zoom})`}>
         {dots.map((d) => (
-          <circle key={d.key} className="sim-dot" cx={d.x} cy={d.y} r={d.r} />
+          <circle
+            key={d.key}
+            className="sim-dot"
+            cx={d.x}
+            cy={d.y}
+            r={d.r}
+            opacity={d.opacity}
+          />
+        ))}
+        {arrivalLabels.map((l) => (
+          <text
+            key={l.key}
+            className="sim-flow-label sim-arrival-label"
+            x={l.x}
+            y={l.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
+            +{l.count}
+          </text>
         ))}
         {labels.map((l) => (
           <text

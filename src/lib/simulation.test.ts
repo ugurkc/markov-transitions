@@ -181,6 +181,73 @@ describe('runSimulation', () => {
   it('supports zero periods', () => {
     const frames = runSimulation([1, 2, 3], identity3, 0, mulberry32(1))
     expect(frames).toHaveLength(1)
-    expect(frames[0]).toEqual({ counts: [1, 2, 3], moves: [] })
+    expect(frames[0]).toEqual({ counts: [1, 2, 3], moves: [], arrivals: [] })
+  })
+  it('has no arrivals when acquisition is omitted', () => {
+    const frames = runSimulation([5, 0, 0], identity3, 3, mulberry32(1))
+    expect(frames.every((f) => f.arrivals.length === 0)).toBe(true)
+  })
+})
+
+describe('runSimulation with acquisition', () => {
+  it('adds new players into the acquiring state each period', () => {
+    const frames = runSimulation([0, 0], identity3.slice(0, 2).map((r) => r.slice(0, 2)), 3, mulberry32(1), [5, 0])
+    expect(frames.map((f) => f.counts)).toEqual([
+      [0, 0],
+      [5, 0],
+      [10, 0],
+      [15, 0],
+    ])
+  })
+  it('records an arrival entry for every acquiring state, each period but the last', () => {
+    const p = [
+      [1, 0],
+      [0, 1],
+    ]
+    const frames = runSimulation([0, 0], p, 2, mulberry32(1), [7, 3])
+    expect(frames[0].arrivals).toEqual([
+      { to: 0, count: 7 },
+      { to: 1, count: 3 },
+    ])
+    expect(frames[1].arrivals).toEqual([
+      { to: 0, count: 7 },
+      { to: 1, count: 3 },
+    ])
+    expect(frames[2].arrivals).toEqual([])
+  })
+  it('omits an arrival entry for a state with zero acquisition', () => {
+    const frames = runSimulation([0, 0], identity3.slice(0, 2).map((r) => r.slice(0, 2)), 1, mulberry32(1), [4, 0])
+    expect(frames[0].arrivals).toEqual([{ to: 0, count: 4 }])
+  })
+  it('composes with transitions — acquired players are added after the period moves', () => {
+    const p = [
+      [0, 1],
+      [0, 1],
+    ]
+    // Everyone in state 0 moves to state 1; state 0 is then topped back up by
+    // acquisition rather than staying at the post-move zero.
+    const frames = runSimulation([10, 0], p, 2, mulberry32(1), [6, 0])
+    expect(frames[1].counts).toEqual([6, 10])
+  })
+  it('grows the total population by the acquisition sum each period', () => {
+    const p = [
+      [0.5, 0.5],
+      [0.5, 0.5],
+    ]
+    const frames = runSimulation([10, 10], p, 5, mulberry32(42), [3, 2])
+    const totals = frames.map((f) => f.counts.reduce((a, b) => a + b, 0))
+    for (let i = 1; i < totals.length; i++) {
+      expect(totals[i]).toBe(totals[i - 1] + 5)
+    }
+  })
+  it('is reproducible for a given seed', () => {
+    const p = [
+      [0.3, 0.4, 0.3],
+      [0.3, 0.4, 0.3],
+      [0.3, 0.4, 0.3],
+    ]
+    const a = runSimulation([9, 9, 9], p, 6, mulberry32(77), [2, 0, 1])
+    const b = runSimulation([9, 9, 9], p, 6, mulberry32(77), [2, 0, 1])
+    expect(a).toEqual(b)
   })
 })

@@ -543,6 +543,12 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
+/* Floats above the node a new cohort is joining; the "+" prefix already
+   marks it as growth, so it borrows the same styling as an edge flow count. */
+.sim-arrival-label {
+  font-size: 11px;
+}
+
 /* Live population, shown inside each state while a cohort is loaded. */
 .state-count {
   display: flex;
@@ -568,12 +574,21 @@ a {
   margin-top: 16px;
 }
 
+.sim-group-label {
+  margin: 16px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .sim-inputs {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px 14px;
-  margin: 14px 0 4px;
+  margin: 8px 0 4px;
 }
 
 .sim-input {

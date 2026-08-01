@@ -18,7 +18,12 @@ export function SimulationPanel({ chain, sim }: SimulationPanelProps) {
   if (chain.states.length === 0) return null
 
   const total = sim.initialCounts.reduce((a, b) => a + b, 0)
-  const scale = Math.max(total, 1)
+  const acquisitionTotal = sim.acquisition.reduce((a, b) => a + b, 0)
+  const displayTotal = sim.displayCounts.reduce((a, b) => a + b, 0)
+  // Scaled to the *current* population, not the starting one — acquisition
+  // grows the cohort over the run, and a fixed scale would send bars past
+  // 100% width the moment new players outnumber the original total.
+  const scale = Math.max(displayTotal, 1)
 
   return (
     <div className="panel sim-panel">
@@ -30,6 +35,7 @@ export function SimulationPanel({ chain, sim }: SimulationPanelProps) {
         wobble from run to run, exactly the way a real cohort does.
       </p>
 
+      <p className="sim-group-label">Starting population</p>
       <div className="sim-inputs">
         {chain.states.map((s, i) => (
           <label key={s.id} className="sim-input">
@@ -47,12 +53,34 @@ export function SimulationPanel({ chain, sim }: SimulationPanelProps) {
         <p className="sim-total">{total} players total</p>
       </div>
 
+      <p className="sim-group-label">New players joining, per period</p>
+      <div className="sim-inputs">
+        {chain.states.map((s, i) => (
+          <label key={s.id} className="sim-input">
+            <span>{s.name}</span>
+            <input
+              type="number"
+              min={0}
+              max={MAX_PLAYERS_PER_STATE}
+              step={5}
+              value={sim.acquisition[i]}
+              onChange={(e) => sim.setAcquisition(s.id, Number(e.target.value))}
+            />
+          </label>
+        ))}
+        <p className="sim-total">
+          {acquisitionTotal > 0
+            ? `+${acquisitionTotal} new players every period`
+            : 'optional — models ongoing acquisition, e.g. new signups'}
+        </p>
+      </div>
+
       <div className="sim-controls">
         <button
           type="button"
           className="sim-primary"
           onClick={sim.playing ? sim.pause : sim.play}
-          disabled={!sim.runnable || total === 0}
+          disabled={!sim.runnable || (total === 0 && acquisitionTotal === 0)}
         >
           {sim.playing ? '❙❙ Pause' : '▶ Play'}
         </button>
@@ -97,6 +125,7 @@ export function SimulationPanel({ chain, sim }: SimulationPanelProps) {
 
       <p className="sim-period">
         Period <strong>{sim.period}</strong> of {sim.lastPeriod}
+        {acquisitionTotal > 0 && ` · ${displayTotal} in the system now`}
       </p>
 
       <DistributionBars

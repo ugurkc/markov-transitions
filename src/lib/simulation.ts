@@ -65,11 +65,19 @@ export interface Move {
   count: number
 }
 
+/** New players entering a state from outside the system for one period. */
+export interface Arrival {
+  to: number
+  count: number
+}
+
 export interface SimFrame {
   /** Population in each state at the start of this period. */
   counts: number[]
   /** Moves that carry this population into the next frame; empty on the last. */
   moves: Move[]
+  /** New players joining on top of `moves`; empty on the last frame. */
+  arrivals: Arrival[]
 }
 
 /**
@@ -118,22 +126,35 @@ export function stepPopulation(
  * each individual player, so results wobble around the expectation the way a
  * real cohort does.
  *
+ * `acquisition[i]` new players join state `i` from outside the system at the
+ * end of every period (after that period's transitions), simulating ongoing
+ * player acquisition. Defaults to none, which is exactly the old behavior.
+ *
  * Returns `periods + 1` frames: frame `t` holds the population at period `t`
- * and the moves that produce frame `t + 1`.
+ * and the moves/arrivals that produce frame `t + 1`.
  */
 export function runSimulation(
   initial: number[],
   p: Matrix,
   periods: number,
   rng: Rng,
+  acquisition: number[] = [],
 ): SimFrame[] {
   const frames: SimFrame[] = []
   let counts = initial.slice()
   for (let t = 0; t < periods; t++) {
-    const { counts: nextCounts, moves } = stepPopulation(counts, p, rng)
-    frames.push({ counts, moves })
-    counts = nextCounts
+    const { counts: moved, moves } = stepPopulation(counts, p, rng)
+    const arrivals: Arrival[] = []
+    for (let i = 0; i < moved.length; i++) {
+      const n = acquisition[i] ?? 0
+      if (n > 0) {
+        moved[i] += n
+        arrivals.push({ to: i, count: n })
+      }
+    }
+    frames.push({ counts, moves, arrivals })
+    counts = moved
   }
-  frames.push({ counts, moves: [] })
+  frames.push({ counts, moves: [], arrivals: [] })
   return frames
 }

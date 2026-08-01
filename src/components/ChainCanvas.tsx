@@ -51,7 +51,9 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
 
   const validation = useMemo(() => validateChain(chain), [chain])
 
-  const showCounts = sim.runnable && sim.initialCounts.some((n) => n > 0)
+  const showCounts =
+    sim.runnable &&
+    (sim.initialCounts.some((n) => n > 0) || sim.acquisition.some((n) => n > 0))
 
   const nodes = useMemo<Node[]>(
     () =>
@@ -242,6 +244,7 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
           <SimulationOverlay
             chain={chain}
             moves={sim.moves}
+            arrivals={sim.arrivals}
             progress={sim.progress}
             visible={sim.playing || sim.progress > 0}
           />

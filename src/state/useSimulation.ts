@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Chain } from '../lib/types'
 import { buildMatrix, validateChain } from '../lib/chain'
 import { advancePos, lerpCounts, mulberry32, runSimulation } from '../lib/simulation'
-import type { Move, SimFrame } from '../lib/simulation'
+import type { Arrival, Move, SimFrame } from '../lib/simulation'
 
 /** Milliseconds a single period takes to animate. */
 const SPEED_MS = { slow: 2200, normal: 1200, fast: 600 }
@@ -26,6 +26,8 @@ export interface Simulation {
   speed: SimSpeed
   /** Population per state at the start of the run, in `chain.states` order. */
   initialCounts: number[]
+  /** New players joining each state every period, in `chain.states` order. */
+  acquisition: number[]
   /** Population per state at the displayed period. */
   counts: number[]
   /**
@@ -35,7 +37,10 @@ export interface Simulation {
   displayCounts: number[]
   /** Moves leaving the displayed period — what the overlay animates. */
   moves: Move[]
+  /** New players joining the displayed period — what the overlay animates. */
+  arrivals: Arrival[]
   setCount: (stateId: string, n: number) => void
+  setAcquisition: (stateId: string, n: number) => void
   setPeriods: (n: number) => void
   setSpeed: (s: SimSpeed) => void
   play: () => void
@@ -52,6 +57,7 @@ export function useSimulation(chain: Chain): Simulation {
   const runnable = validation.valid && chain.states.length > 0
 
   const [countsById, setCountsById] = useState<Record<string, number>>({})
+  const [acquisitionById, setAcquisitionById] = useState<Record<string, number>>({})
   const [periods, setPeriodsRaw] = useState(12)
   const [speed, setSpeed] = useState<SimSpeed>('normal')
   const [seed, setSeed] = useState(randomSeed)
@@ -67,12 +73,19 @@ export function useSimulation(chain: Chain): Simulation {
     [chain.states, countsById],
   )
 
+  const acquisition = useMemo(
+    () => chain.states.map((s) => acquisitionById[s.id] ?? 0),
+    [chain.states, acquisitionById],
+  )
+
   const matrix = useMemo(() => buildMatrix(chain), [chain])
 
   const frames = useMemo(
     () =>
-      runnable ? runSimulation(initialCounts, matrix, periods, mulberry32(seed)) : null,
-    [runnable, initialCounts, matrix, periods, seed],
+      runnable
+        ? runSimulation(initialCounts, matrix, periods, mulberry32(seed), acquisition)
+        : null,
+    [runnable, initialCounts, matrix, periods, seed, acquisition],
   )
 
   // What the run depends on. Node drags change `chain` but not this, so
@@ -86,10 +99,11 @@ export function useSimulation(chain: Chain): Simulation {
           .sort()
           .join(','),
         initialCounts.join(','),
+        acquisition.join(','),
         periods,
         seed,
       ].join('::'),
-    [chain.states, chain.transitions, initialCounts, periods, seed],
+    [chain.states, chain.transitions, initialCounts, acquisition, periods, seed],
   )
 
   // Rewind whenever the run itself changes — a half-played animation of a
@@ -136,6 +150,13 @@ export function useSimulation(chain: Chain): Simulation {
     }))
   }, [])
 
+  const setAcquisition = useCallback((stateId: string, n: number) => {
+    setAcquisitionById((prev) => ({
+      ...prev,
+      [stateId]: Math.max(0, Math.min(MAX_PLAYERS_PER_STATE, Math.round(n))),
+    }))
+  }, [])
+
   const setPeriods = useCallback((n: number) => {
     setPeriodsRaw(Math.max(1, Math.min(MAX_PERIODS, Math.round(n))))
   }, [])
@@ -169,10 +190,13 @@ export function useSimulation(chain: Chain): Simulation {
     periods,
     speed,
     initialCounts,
+    acquisition,
     counts,
     displayCounts,
     moves: frames ? frames[period].moves : [],
+    arrivals: frames ? frames[period].arrivals : [],
     setCount,
+    setAcquisition,
     setPeriods,
     setSpeed,
     play,
