@@ -1,5 +1,7 @@
 import { vecMat, invert, identity, matMul } from './linalg'
 import type { Matrix, Vector } from './linalg'
+import type { Chain } from './types'
+import { buildMatrix } from './chain'
 
 /** Distributions after 0..n steps, starting from `start`. */
 export function nStepForecast(p: Matrix, start: Vector, n: number): Vector[] {
@@ -62,4 +64,30 @@ export function steadyState(p: Matrix, maxIter = 100_000, tol = 1e-12): SteadySt
     if (diff < tol) return { distribution: v, converged: true }
   }
   return { distribution: v, converged: false }
+}
+
+export interface DiagnosticsRow {
+  stateId: string
+  stickiness: number
+  topOutbound: { toId: string; probability: number } | null
+  dropOff: number | null
+}
+
+export function diagnostics(chain: Chain, riskStateId: string | null): DiagnosticsRow[] {
+  const m = buildMatrix(chain)
+  const riskIdx = riskStateId ? chain.states.findIndex((s) => s.id === riskStateId) : -1
+  return chain.states.map((s, i) => {
+    let top: DiagnosticsRow['topOutbound'] = null
+    m[i].forEach((prob, j) => {
+      if (j !== i && prob > 0 && (!top || prob > top.probability)) {
+        top = { toId: chain.states[j].id, probability: prob }
+      }
+    })
+    return {
+      stateId: s.id,
+      stickiness: m[i][i],
+      topOutbound: top,
+      dropOff: riskIdx >= 0 ? m[i][riskIdx] : null,
+    }
+  })
 }

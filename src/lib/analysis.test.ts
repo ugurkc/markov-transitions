@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { nStepForecast, absorptionAnalysis, steadyState } from './analysis'
+import { nStepForecast, absorptionAnalysis, steadyState, diagnostics } from './analysis'
+import type { Chain } from './types'
+
+function mkChain(names: string[], rows: Record<string, Record<string, number>>): Chain {
+  const states = names.map((name) => ({ id: name, name, position: { x: 0, y: 0 } }))
+  const transitions = Object.entries(rows).flatMap(([from, tos]) =>
+    Object.entries(tos).map(([to, probability]) => ({
+      id: `${from}->${to}`, from, to, probability,
+    })),
+  )
+  return { id: 'test', name: 'test', states, transitions }
+}
 
 const weather = [[0.9, 0.1], [0.5, 0.5]]
 
@@ -64,5 +75,23 @@ describe('steadyState', () => {
     const r = steadyState([[0, 1], [1, 0]])
     expect(r.converged).toBe(true)
     expect(r.distribution[0]).toBeCloseTo(0.5, 8)
+  })
+})
+
+describe('diagnostics', () => {
+  const c = mkChain(['T', 'L', 'C'], {
+    T: { T: 0.5, L: 0.3, C: 0.2 },
+    L: { L: 0.6, T: 0.25, C: 0.15 },
+    C: { C: 1 },
+  })
+  it('reports stickiness (self-loop), top outbound, and drop-off to the risk state', () => {
+    const d = diagnostics(c, 'C')
+    const t = d.find((row) => row.stateId === 'T')!
+    expect(t.stickiness).toBeCloseTo(0.5, 12)
+    expect(t.topOutbound).toEqual({ toId: 'L', probability: 0.3 })
+    expect(t.dropOff).toBeCloseTo(0.2, 12)
+  })
+  it('risk state omitted → dropOff is null', () => {
+    expect(diagnostics(c, null)[0].dropOff).toBeNull()
   })
 })
