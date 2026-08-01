@@ -41,3 +41,25 @@ export function absorptionAnalysis(p: Matrix, absorbingIdx: number[]): Absorptio
   })
   return { absorptionProbs, expectedSteps }
 }
+
+export interface SteadyStateResult {
+  distribution: Vector
+  converged: boolean
+}
+
+/**
+ * Stationary distribution by power iteration on the lazy chain (P+I)/2,
+ * which has the same stationary distribution and is always aperiodic.
+ */
+export function steadyState(p: Matrix, maxIter = 100_000, tol = 1e-12): SteadyStateResult {
+  const n = p.length
+  const lazy = p.map((row, i) => row.map((x, j) => (x + (i === j ? 1 : 0)) / 2))
+  let v: Vector = Array(n).fill(1 / n)
+  for (let it = 0; it < maxIter; it++) {
+    const nv = vecMat(v, lazy)
+    const diff = nv.reduce((s, x, i) => s + Math.abs(x - v[i]), 0)
+    v = nv
+    if (diff < tol) return { distribution: v, converged: true }
+  }
+  return { distribution: v, converged: false }
+}

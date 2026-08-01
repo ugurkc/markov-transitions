@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { nStepForecast, absorptionAnalysis } from './analysis'
+import { nStepForecast, absorptionAnalysis, steadyState } from './analysis'
 
 const weather = [[0.9, 0.1], [0.5, 0.5]]
 
@@ -50,5 +50,19 @@ describe('absorptionAnalysis', () => {
     expect(() => absorptionAnalysis(cycle, [0])).toThrowError(
       'Some states can never reach an absorbing state',
     )
+  })
+})
+
+describe('steadyState', () => {
+  it('weather chain converges to [5/6, 1/6]', () => {
+    const r = steadyState([[0.9, 0.1], [0.5, 0.5]])
+    expect(r.converged).toBe(true)
+    expect(r.distribution[0]).toBeCloseTo(5 / 6, 8)
+    expect(r.distribution[1]).toBeCloseTo(1 / 6, 8)
+  })
+  it('handles a periodic chain via lazy-chain damping (A↔B → [1/2, 1/2])', () => {
+    const r = steadyState([[0, 1], [1, 0]])
+    expect(r.converged).toBe(true)
+    expect(r.distribution[0]).toBeCloseTo(0.5, 8)
   })
 })
