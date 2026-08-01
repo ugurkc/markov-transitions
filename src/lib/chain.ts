@@ -9,7 +9,10 @@ export interface ValidationResult {
   invalidStateIds: string[]
 }
 
-/** Row-stochastic matrix in chain.states order; absent transitions are 0. */
+/**
+ * Row-stochastic matrix in chain.states order; absent transitions are 0.
+ * Duplicate (from, to) pairs sum; transitions referencing unknown state ids are skipped.
+ */
 export function buildMatrix(chain: Chain): Matrix {
   const index = new Map(chain.states.map((s, i) => [s.id, i]))
   const n = chain.states.length
@@ -23,15 +26,28 @@ export function buildMatrix(chain: Chain): Matrix {
   return m
 }
 
-/** Every row must sum to 1 within PROB_TOLERANCE; an empty chain is valid. */
+/**
+ * Every row must sum to 1 within PROB_TOLERANCE, and every transition
+ * probability must lie in [0, 1]; an empty chain is valid.
+ */
 export function validateChain(chain: Chain): ValidationResult {
   const matrix = buildMatrix(chain)
+  const stateIds = new Set(chain.states.map((s) => s.id))
+  const outOfRange = new Set<string>()
+  for (const t of chain.transitions) {
+    if (!stateIds.has(t.from) || !stateIds.has(t.to)) continue
+    if (t.probability < -PROB_TOLERANCE || t.probability > 1 + PROB_TOLERANCE) {
+      outOfRange.add(t.from)
+    }
+  }
   const rowSums: Record<string, number> = {}
   const invalidStateIds: string[] = []
   chain.states.forEach((s, i) => {
     const sum = matrix[i].reduce((acc, x) => acc + x, 0)
     rowSums[s.id] = sum
-    if (Math.abs(sum - 1) > PROB_TOLERANCE) invalidStateIds.push(s.id)
+    if (Math.abs(sum - 1) > PROB_TOLERANCE || outOfRange.has(s.id)) {
+      invalidStateIds.push(s.id)
+    }
   })
   return { valid: invalidStateIds.length === 0, rowSums, invalidStateIds }
 }

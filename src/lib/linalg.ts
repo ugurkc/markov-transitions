@@ -27,7 +27,8 @@ export function vecMat(v: Vector, p: Matrix): Vector {
 /** Gauss–Jordan inversion with partial pivoting. Throws on singular input. */
 export function invert(m: Matrix): Matrix {
   const n = m.length
-  const a = m.map((row, i) => [...row, ...identity(n)[i]])
+  const I = identity(n)
+  const a = m.map((row, i) => [...row, ...I[i]])
   for (let col = 0; col < n; col++) {
     let piv = col
     for (let r = col + 1; r < n; r++) {
