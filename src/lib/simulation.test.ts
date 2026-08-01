@@ -3,6 +3,7 @@ import {
   activePopulationSeries,
   advancePos,
   lerpCounts,
+  lifetimeHistogram,
   mulberry32,
   sampleDestination,
   stepPopulation,
@@ -280,5 +281,55 @@ describe('activePopulationSeries', () => {
   it('falls back to the raw total when the output index is not found', () => {
     const frames = runSimulation([4, 6], identity3.slice(0, 2).map((r) => r.slice(0, 2)), 2, mulberry32(1))
     expect(activePopulationSeries(frames, -1)).toEqual([10, 10, 10])
+  })
+})
+
+describe('lifetimeHistogram', () => {
+  it('buckets departures by the week they left in, ignoring the output self-loop', () => {
+    // Everyone leaves at week 0 (first step), then just stays (self-loop).
+    const p = [
+      [0, 1],
+      [0, 1],
+    ]
+    const frames = runSimulation([10, 0], p, 3, mulberry32(1))
+    expect(frames).toHaveLength(4) // periods + 1
+    expect(lifetimeHistogram(frames, 1)).toEqual([10, 0, 0, 0])
+  })
+  it('spreads departures across the weeks they actually happen', () => {
+    // Half the remaining population leaves each week; run long enough that
+    // essentially everyone has departed by the end.
+    const p = [
+      [0.5, 0.5],
+      [0, 1],
+    ]
+    const frames = runSimulation([100, 0], p, 20, mulberry32(7))
+    const hist = lifetimeHistogram(frames, 1)
+    expect(hist).toHaveLength(21) // periods + 1
+    expect(hist.reduce((a, b) => a + b, 0)).toBe(100)
+    // Roughly halving each week: week 0 should be the largest bucket.
+    expect(hist[0]).toBeGreaterThan(hist[1])
+    expect(hist[1]).toBeGreaterThan(hist[3])
+  })
+  it('is all zero when nobody ever reaches the output state', () => {
+    const identity2 = [
+      [1, 0],
+      [0, 1],
+    ]
+    const frames = runSimulation([10, 0], identity2, 3, mulberry32(1))
+    expect(lifetimeHistogram(frames, 1)).toEqual([0, 0, 0, 0])
+  })
+  it('has one entry per frame, with the final (moveless) frame always zero', () => {
+    const p = [
+      [0.5, 0.5],
+      [0, 1],
+    ]
+    const frames = runSimulation([10, 0], p, 5, mulberry32(3))
+    const hist = lifetimeHistogram(frames, 1)
+    expect(hist).toHaveLength(frames.length)
+    expect(hist[hist.length - 1]).toBe(0)
+  })
+  it('returns all zeros when the output index is not found', () => {
+    const frames = runSimulation([10, 0], identity3.slice(0, 2).map((r) => r.slice(0, 2)), 2, mulberry32(1))
+    expect(lifetimeHistogram(frames, -1)).toEqual([0, 0, 0])
   })
 })

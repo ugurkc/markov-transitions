@@ -13,8 +13,10 @@ and transitions on an editable canvas, then run calculators for:
   forecast. The simulation won't run until both an input and output state are
   chosen
 - **Retention chart** — active-player curve (everyone not in the output
-  state) plotted against weeks elapsed, updating live alongside the
-  simulation
+  state) plotted against weeks elapsed, plus a customer-lifetime histogram
+  (how many weeks the starting cohort stuck around before reaching the
+  output state, computed from an acquisition-free shadow run so it isn't
+  skewed by later arrivals) — both update live alongside the simulation
 - **Diagnostics** — per-state stickiness (self-loop probability), top
   outbound transition, and drop-off rate into a chosen risk state
 - **N-step forecast** — project the state distribution forward from a

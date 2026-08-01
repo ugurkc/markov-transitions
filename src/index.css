@@ -841,6 +841,15 @@ a {
   text-align: center;
 }
 
+.retention-subheading {
+  margin-top: 20px;
+}
+
+.lifetime-bar {
+  fill: var(--accent);
+  rx: 2;
+}
+
 /* --- Transition matrix --- */
 
 .matrix-panel {

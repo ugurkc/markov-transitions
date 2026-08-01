@@ -5,6 +5,7 @@ import {
   activePopulationSeries,
   advancePos,
   lerpCounts,
+  lifetimeHistogram,
   mulberry32,
   runSimulation,
 } from '../lib/simulation'
@@ -51,6 +52,12 @@ export interface Simulation {
   arrivals: Arrival[]
   /** "Still playing" (not in the output state) per week, 0..lastPeriod. */
   retentionSeries: number[]
+  /**
+   * Customer-lifetime histogram: bucket `w` is how many players' tenure
+   * turned out to be exactly `w` weeks, for the *starting* cohort only (no
+   * acquisition mixed in — see the shadow run this is computed from).
+   */
+  lifetimeCounts: number[]
   setCount: (stateId: string, n: number) => void
   setInputRate: (n: number) => void
   setPeriods: (n: number) => void
@@ -108,6 +115,21 @@ export function useSimulation(chain: Chain): Simulation {
   const retentionSeries = useMemo(
     () => (frames ? activePopulationSeries(frames, outputIdx) : []),
     [frames, outputIdx],
+  )
+
+  // A second, acquisition-free run of just the starting cohort. Mixing
+  // acquisition into the lifetime histogram would land players who joined
+  // at different weeks on the same absolute-week bucket despite having very
+  // different actual tenures, so this tracks the starting cohort in
+  // isolation — same seed, same matrix, just nobody topping it up.
+  const shadowFrames = useMemo(
+    () => (runnable ? runSimulation(initialCounts, matrix, periods, mulberry32(seed)) : null),
+    [runnable, initialCounts, matrix, periods, seed],
+  )
+
+  const lifetimeCounts = useMemo(
+    () => (shadowFrames ? lifetimeHistogram(shadowFrames, outputIdx) : []),
+    [shadowFrames, outputIdx],
   )
 
   // What the run depends on. Node drags change `chain` but not this, so
@@ -227,6 +249,7 @@ export function useSimulation(chain: Chain): Simulation {
     moves: frames ? frames[period].moves : [],
     arrivals: frames ? frames[period].arrivals : [],
     retentionSeries,
+    lifetimeCounts,
     setCount,
     setInputRate,
     setPeriods,

@@ -7,11 +7,17 @@ interface RetentionChartProps {
 }
 
 const W = 440
-const H = 200
 const PAD_LEFT = 34
 const PAD_RIGHT = 12
-const PAD_TOP = 14
-const PAD_BOTTOM = 28
+
+const LINE_H = 200
+const LINE_PAD_TOP = 14
+const LINE_PAD_BOTTOM = 28
+
+const BAR_H = 150
+const BAR_PAD_TOP = 14
+const BAR_PAD_BOTTOM = 28
+const BAR_GAP_FRACTION = 0.25
 
 /**
  * Active-player curve: x is weeks elapsed, y is everyone not currently in
@@ -19,18 +25,26 @@ const PAD_BOTTOM = 28
  * rate and dipping as players reach the output state — so it visibly answers
  * "how many people are actually still playing, week over week."
  *
- * The x-axis always spans the full configured run (`sim.periods`), even
- * though the drawn line only reaches the current week — a fixed axis reads
- * far less jumpy than one that keeps resizing itself as playback advances.
+ * Below it, a customer-lifetime histogram: bar `w` is how many of the
+ * *starting* cohort ended up with a tenure of exactly `w` weeks before
+ * reaching the output state. It's a separate, acquisition-free view — mixing
+ * in players who joined later would land very different actual lifetimes on
+ * the same bar (see useSimulation's shadow run).
+ *
+ * Both share an x-axis that always spans the full configured run
+ * (`sim.periods`), even though the drawn data only reaches the current
+ * week — a fixed axis reads far less jumpy than one that keeps resizing
+ * itself as playback advances.
  */
 export function RetentionChart({ chain, sim }: RetentionChartProps) {
   if (chain.states.length === 0) return null
 
   const innerW = W - PAD_LEFT - PAD_RIGHT
-  const innerH = H - PAD_TOP - PAD_BOTTOM
   const x = (week: number) => PAD_LEFT + (week / Math.max(sim.periods, 1)) * innerW
+
+  const lineInnerH = LINE_H - LINE_PAD_TOP - LINE_PAD_BOTTOM
   const yMax = Math.max(...sim.retentionSeries, 1)
-  const y = (v: number) => PAD_TOP + innerH - (v / yMax) * innerH
+  const y = (v: number) => LINE_PAD_TOP + lineInnerH - (v / yMax) * lineInnerH
 
   const revealed = sim.retentionSeries.slice(0, sim.period + 1)
   const points = revealed.map((v, week) => ({ x: x(week), y: y(v), week, v }))
@@ -41,16 +55,22 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
       : ''
   const current = points[points.length - 1]
 
+  const barInnerH = BAR_H - BAR_PAD_TOP - BAR_PAD_BOTTOM
+  const barMax = Math.max(...sim.lifetimeCounts, 1)
+  const barY = (v: number) => BAR_PAD_TOP + barInnerH - (v / barMax) * barInnerH
+  const barBaseline = BAR_PAD_TOP + barInnerH
+  const barWidth = (innerW / Math.max(sim.periods, 1)) * (1 - BAR_GAP_FRACTION)
+  const revealedBars = sim.lifetimeCounts.slice(0, sim.period + 1)
+  const outputName = chain.states.find((s) => s.id === chain.outputStateId)?.name
+
   return (
     <div className="panel retention-panel">
       <h3>Retention</h3>
       <p className="panel-note">
         How many players are actually still active, week by week &mdash; new
         arrivals push it up, players reaching{' '}
-        {chain.outputStateId
-          ? <strong>{chain.states.find((s) => s.id === chain.outputStateId)?.name}</strong>
-          : 'the output state'}{' '}
-        pull it down.
+        {outputName ? <strong>{outputName}</strong> : 'the output state'} pull
+        it down.
       </p>
 
       {!sim.hasEndpoints ? (
@@ -62,42 +82,95 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
           Fix the invalid rows above to run the simulation.
         </p>
       ) : (
-        <svg
-          className="retention-chart"
-          viewBox={`0 0 ${W} ${H}`}
-          role="img"
-          aria-label={`Active players over ${sim.periods} weeks, currently ${current?.v ?? 0} at week ${sim.period}`}
-        >
-          <line
-            className="retention-axis"
-            x1={PAD_LEFT}
-            y1={y(0)}
-            x2={W - PAD_RIGHT}
-            y2={y(0)}
-          />
-          <line
-            className="retention-axis"
-            x1={PAD_LEFT}
-            y1={PAD_TOP}
-            x2={PAD_LEFT}
-            y2={y(0)}
-          />
-          <text className="retention-tick" x={PAD_LEFT - 6} y={PAD_TOP + 4} textAnchor="end">
-            {Math.round(yMax)}
-          </text>
-          <text className="retention-tick" x={PAD_LEFT - 6} y={y(0)} textAnchor="end">
-            0
-          </text>
-          <text className="retention-tick" x={PAD_LEFT} y={H - 8} textAnchor="start">
-            week 0
-          </text>
-          <text className="retention-tick" x={W - PAD_RIGHT} y={H - 8} textAnchor="end">
-            week {sim.periods}
-          </text>
-          {areaPath && <path className="retention-area" d={areaPath} />}
-          {linePath && <path className="retention-line" d={linePath} />}
-          {current && <circle className="retention-dot" cx={current.x} cy={current.y} r={3.5} />}
-        </svg>
+        <>
+          <svg
+            className="retention-chart"
+            viewBox={`0 0 ${W} ${LINE_H}`}
+            role="img"
+            aria-label={`Active players over ${sim.periods} weeks, currently ${current?.v ?? 0} at week ${sim.period}`}
+          >
+            <line
+              className="retention-axis"
+              x1={PAD_LEFT}
+              y1={y(0)}
+              x2={W - PAD_RIGHT}
+              y2={y(0)}
+            />
+            <line
+              className="retention-axis"
+              x1={PAD_LEFT}
+              y1={LINE_PAD_TOP}
+              x2={PAD_LEFT}
+              y2={y(0)}
+            />
+            <text className="retention-tick" x={PAD_LEFT - 6} y={LINE_PAD_TOP + 4} textAnchor="end">
+              {Math.round(yMax)}
+            </text>
+            <text className="retention-tick" x={PAD_LEFT - 6} y={y(0)} textAnchor="end">
+              0
+            </text>
+            <text className="retention-tick" x={PAD_LEFT} y={LINE_H - 8} textAnchor="start">
+              week 0
+            </text>
+            <text className="retention-tick" x={W - PAD_RIGHT} y={LINE_H - 8} textAnchor="end">
+              week {sim.periods}
+            </text>
+            {areaPath && <path className="retention-area" d={areaPath} />}
+            {linePath && <path className="retention-line" d={linePath} />}
+            {current && <circle className="retention-dot" cx={current.x} cy={current.y} r={3.5} />}
+          </svg>
+
+          <p className="sim-group-label retention-subheading">Customer lifetime</p>
+          <p className="panel-note">
+            Of the players who started the run, how many weeks did they stick
+            around before reaching{' '}
+            {outputName ? <strong>{outputName}</strong> : 'the output state'}
+            ? Bar 0 is players gone within their very first week.
+          </p>
+          <svg
+            className="retention-chart"
+            viewBox={`0 0 ${W} ${BAR_H}`}
+            role="img"
+            aria-label={`Customer lifetime distribution over ${sim.periods} weeks`}
+          >
+            <line
+              className="retention-axis"
+              x1={PAD_LEFT}
+              y1={barBaseline}
+              x2={W - PAD_RIGHT}
+              y2={barBaseline}
+            />
+            <line
+              className="retention-axis"
+              x1={PAD_LEFT}
+              y1={BAR_PAD_TOP}
+              x2={PAD_LEFT}
+              y2={barBaseline}
+            />
+            <text className="retention-tick" x={PAD_LEFT - 6} y={BAR_PAD_TOP + 4} textAnchor="end">
+              {Math.round(barMax)}
+            </text>
+            <text className="retention-tick" x={PAD_LEFT - 6} y={barBaseline} textAnchor="end">
+              0
+            </text>
+            <text className="retention-tick" x={PAD_LEFT} y={BAR_H - 8} textAnchor="start">
+              week 0
+            </text>
+            <text className="retention-tick" x={W - PAD_RIGHT} y={BAR_H - 8} textAnchor="end">
+              week {sim.periods}
+            </text>
+            {revealedBars.map((v, week) => (
+              <rect
+                key={week}
+                className="lifetime-bar"
+                x={x(week) - barWidth / 2}
+                y={barY(v)}
+                width={barWidth}
+                height={Math.max(0, barBaseline - barY(v))}
+              />
+            ))}
+          </svg>
+        </>
       )}
     </div>
   )

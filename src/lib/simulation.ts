@@ -173,3 +173,25 @@ export function activePopulationSeries(frames: SimFrame[], outputIdx: number): n
     return outputIdx >= 0 ? total - (f.counts[outputIdx] ?? 0) : total
   })
 }
+
+/**
+ * Customer-lifetime histogram: bucket `t` counts everyone who first arrived
+ * at the output state during the step out of frame `t` — i.e. how many
+ * players' tenure turned out to be "week t" long. One entry per frame; the
+ * last is always 0, since the final frame has no outgoing moves.
+ *
+ * Feed this a run with no acquisition mixed in (see useSimulation's shadow
+ * run) so the buckets reflect one cohort's tenure, not a blend of players
+ * who joined at different weeks and would otherwise land on the same
+ * absolute-week bucket despite having very different actual lifetimes.
+ */
+export function lifetimeHistogram(frames: SimFrame[], outputIdx: number): number[] {
+  if (outputIdx < 0) return frames.map(() => 0)
+  return frames.map((f) =>
+    f.moves
+      // Only new arrivals count as a departure — a self-loop just means
+      // someone who already left is still gone, not leaving a second time.
+      .filter((m) => m.to === outputIdx && m.from !== outputIdx)
+      .reduce((a, m) => a + m.count, 0),
+  )
+}
