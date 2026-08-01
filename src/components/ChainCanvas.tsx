@@ -44,9 +44,6 @@ function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
   // measurements back — otherwise re-adopted nodes count as unmeasured and every
   // edge disappears until the next resize.
   const measuredRef = useRef(new Map<string, { width: number; height: number }>())
-  const [presetId, setPresetId] = useState(
-    () => presets.find((p) => p.id === chain.id)?.id ?? presets[0].id,
-  )
 
   const validation = useMemo(() => validateChain(chain), [chain])
 
@@ -163,33 +160,59 @@ function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
     })
   }, [dispatch, screenToFlowPosition])
 
+  // Only a custom chain represents unsaved work; switching between presets
+  // (which are fixed) needs no confirmation.
+  const confirmDiscard = useCallback(() => {
+    if (chain.id !== 'custom' || chain.states.length === 0) return true
+    return window.confirm('Replace your custom chain? This cannot be undone.')
+  }, [chain])
+
   const loadPreset = useCallback(
     (id: string) => {
       const preset = presets.find((p) => p.id === id)
-      if (!preset) return
-      if (!window.confirm(`Load "${preset.name}"? This replaces the current chain.`)) return
-      setPresetId(id)
+      if (!preset || chain.id === id) return
+      if (!confirmDiscard()) return
       setSelected(new Set())
       measuredRef.current.clear()
       dispatch({ type: 'loadChain', chain: structuredClone(preset) })
     },
-    [dispatch],
+    [dispatch, chain.id, confirmDiscard],
   )
+
+  const startBlank = useCallback(() => {
+    if (chain.id === 'custom' && chain.states.length === 0) return
+    if (!confirmDiscard()) return
+    setSelected(new Set())
+    measuredRef.current.clear()
+    dispatch({
+      type: 'loadChain',
+      chain: { id: 'custom', name: 'My chain', states: [], transitions: [] },
+    })
+  }, [dispatch, chain, confirmDiscard])
 
   return (
     <div>
+      <div className="preset-bar" role="group" aria-label="Chain presets">
+        {presets.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className={`preset-tab${chain.id === p.id ? ' active' : ''}`}
+            onClick={() => loadPreset(p.id)}
+          >
+            {p.name}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`preset-tab${chain.id === 'custom' ? ' active' : ''}`}
+          onClick={startBlank}
+        >
+          Build your own
+        </button>
+      </div>
       <div className="canvas-toolbar">
         <button type="button" onClick={addStateAtCenter}>+ Add state</button>
-        <select
-          value={presetId}
-          onChange={(e) => loadPreset(e.target.value)}
-          aria-label="Preset"
-        >
-          {presets.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-        <button type="button" onClick={() => loadPreset(presetId)}>Reset to preset</button>
       </div>
       <div
         ref={wrapperRef}
@@ -209,6 +232,7 @@ function ChainCanvasInner({ chain, dispatch, theme }: ChainCanvasProps) {
           deleteKeyCode={['Backspace', 'Delete']}
           zoomOnDoubleClick={false}
           colorMode={theme}
+          proOptions={{ hideAttribution: true }}
           fitView
         >
           <Background />

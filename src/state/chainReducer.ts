@@ -9,9 +9,27 @@ export type ChainAction =
   | { type: 'addTransition'; from: string; to: string }
   | { type: 'setProbability'; id: string; probability: number }
   | { type: 'deleteTransition'; id: string }
+  | { type: 'setCell'; from: string; to: string; probability: number }
   | { type: 'loadChain'; chain: Chain }
 
+const clamp01 = (p: number) => Math.max(0, Math.min(1, p))
+
 export function chainReducer(chain: Chain, action: ChainAction): Chain {
+  const next = reduce(chain, action)
+  // Any content edit turns the chain into a custom one, so the preset picker
+  // knows a preset is no longer active. Moving states is layout, not content;
+  // loadChain sets its own id.
+  if (
+    next !== chain &&
+    action.type !== 'moveState' &&
+    action.type !== 'loadChain'
+  ) {
+    return { ...next, id: 'custom' }
+  }
+  return next
+}
+
+function reduce(chain: Chain, action: ChainAction): Chain {
   switch (action.type) {
     case 'addState': {
       const n = chain.states.length + 1
@@ -43,7 +61,7 @@ export function chainReducer(chain: Chain, action: ChainAction): Chain {
           id: crypto.randomUUID(),
           from: action.from,
           to: action.to,
-          probability: Math.max(0, Math.min(1, 1 - rowSum)),
+          probability: clamp01(1 - rowSum),
         }],
       }
     }
@@ -51,10 +69,36 @@ export function chainReducer(chain: Chain, action: ChainAction): Chain {
       return {
         ...chain,
         transitions: chain.transitions.map((t) =>
-          t.id === action.id ? { ...t, probability: Math.max(0, Math.min(1, action.probability)) } : t),
+          t.id === action.id ? { ...t, probability: clamp01(action.probability) } : t),
       }
     case 'deleteTransition':
       return { ...chain, transitions: chain.transitions.filter((t) => t.id !== action.id) }
+    case 'setCell': {
+      const existing = chain.transitions.find(
+        (t) => t.from === action.from && t.to === action.to,
+      )
+      const p = clamp01(action.probability)
+      if (!existing) {
+        if (p === 0) return chain
+        return {
+          ...chain,
+          transitions: [...chain.transitions, {
+            id: crypto.randomUUID(),
+            from: action.from,
+            to: action.to,
+            probability: p,
+          }],
+        }
+      }
+      if (p === 0) {
+        return { ...chain, transitions: chain.transitions.filter((t) => t.id !== existing.id) }
+      }
+      return {
+        ...chain,
+        transitions: chain.transitions.map((t) =>
+          t.id === existing.id ? { ...t, probability: p } : t),
+      }
+    }
     case 'loadChain':
       return action.chain
   }

@@ -27,7 +27,12 @@ export function StateNode({ data }: NodeProps) {
         setEditing(true)
       }}
     >
-      <Handle type="target" position={Position.Top} />
+      {/* Rendered edges float around the node border; these handles exist to
+          start/finish connection drags from any side (ConnectionMode.Loose). */}
+      <Handle id="top" type="source" position={Position.Top} />
+      <Handle id="right" type="source" position={Position.Right} />
+      <Handle id="bottom" type="source" position={Position.Bottom} />
+      <Handle id="left" type="source" position={Position.Left} />
       {editing ? (
         <input
           className="nodrag"
@@ -44,7 +49,6 @@ export function StateNode({ data }: NodeProps) {
         <span>{d.name}</span>
       )}
       {d.invalid && <div className="row-sum-badge">Σ = {d.rowSum.toFixed(2)}</div>}
-      <Handle type="source" position={Position.Bottom} />
     </div>
   )
 }

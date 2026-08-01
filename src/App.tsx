@@ -1,4 +1,5 @@
 import { ChainCanvas } from './components/ChainCanvas'
+import { MatrixPanel } from './components/MatrixPanel'
 import { Placeholder } from './components/Placeholder'
 import { Sidebar } from './components/Sidebar'
 import { ThemeToggle } from './components/ThemeToggle'
@@ -55,6 +56,7 @@ function App() {
           <section className="tool-section" id="try-it">
             <h2>Try it: build your own player lifecycle</h2>
             <ChainCanvas chain={chain} dispatch={dispatch} theme={theme} />
+            <MatrixPanel chain={chain} dispatch={dispatch} />
             <CalculatorsSection chain={chain} />
           </section>
 

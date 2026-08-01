@@ -36,6 +36,34 @@ describe('chainReducer', () => {
     const c = chainReducer(funnelPreset, { type: 'setProbability', id: 't-l', probability: 1.5 })
     expect(c.transitions.find((t) => t.id === 't-l')!.probability).toBe(1)
   })
+  it('setCell creates a transition with the given probability in an empty cell', () => {
+    const c = chainReducer(funnelPreset, { type: 'setCell', from: 'churned', to: 'tutorial', probability: 0.2 })
+    const t = c.transitions.find((t) => t.from === 'churned' && t.to === 'tutorial')
+    expect(t).toBeDefined()
+    expect(t!.probability).toBe(0.2)
+  })
+  it('setCell updates an existing transition, clamping to [0, 1]', () => {
+    const c = chainReducer(funnelPreset, { type: 'setCell', from: 'tutorial', to: 'leveling', probability: 1.5 })
+    expect(c.transitions.find((t) => t.id === 't-l')!.probability).toBe(1)
+  })
+  it('setCell with 0 deletes an existing transition', () => {
+    const c = chainReducer(funnelPreset, { type: 'setCell', from: 'tutorial', to: 'leveling', probability: 0 })
+    expect(c.transitions.find((t) => t.from === 'tutorial' && t.to === 'leveling')).toBeUndefined()
+  })
+  it('setCell with 0 on an absent pair is a no-op', () => {
+    const c = chainReducer(funnelPreset, { type: 'setCell', from: 'churned', to: 'tutorial', probability: 0 })
+    expect(c).toBe(funnelPreset)
+  })
+  it('content edits flip the chain id to custom; moveState and loadChain keep it', () => {
+    let c = chainReducer(funnelPreset, { type: 'setProbability', id: 't-l', probability: 0.4 })
+    expect(c.id).toBe('custom')
+    c = chainReducer(funnelPreset, { type: 'moveState', id: 'tutorial', position: { x: 1, y: 1 } })
+    expect(c.id).toBe(funnelPreset.id)
+    c = chainReducer(c, { type: 'loadChain', chain: funnelPreset })
+    expect(c.id).toBe(funnelPreset.id)
+    c = chainReducer(c, { type: 'addState', position: { x: 0, y: 0 } })
+    expect(c.id).toBe('custom')
+  })
   it('renameState, moveState, deleteTransition, loadChain behave as expected', () => {
     let c = chainReducer(funnelPreset, { type: 'renameState', id: 'tutorial', name: 'Onboarding' })
     expect(c.states.find((s) => s.id === 'tutorial')!.name).toBe('Onboarding')
