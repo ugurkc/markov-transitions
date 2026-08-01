@@ -9,7 +9,7 @@ import { useChain } from './state/useChain'
 import { useSimulation } from './state/useSimulation'
 import { useTheme } from './state/useTheme'
 
-const REPO_URL = 'https://github.com/ugurkc/markov-transitions'
+const REPO_URL = 'https://github.com/ugurkc/watershed'
 
 const SECTIONS = [
   { id: 'intro', label: 'Introduction' },
@@ -35,13 +35,13 @@ function App() {
         <div className="content-layout">
           <article className="article">
             <header className="article-header" id="intro">
-              <p className="eyebrow">Interactive essay</p>
-              <h1>Player Lifecycles as Markov Chains</h1>
+              <p className="eyebrow">Player lifecycles as Markov chains</p>
+              <h1>Watershed</h1>
               <p className="subtitle">
                 By the time you reach the bottom of this page, you&rsquo;ll be
                 able to build a living model of how your players move &mdash;
-                and use it to spot who&rsquo;s about to disappear before they
-                do.
+                and prove to yourself that you can&rsquo;t move the
+                destination, only the path that leads there.
               </p>
             </header>
 

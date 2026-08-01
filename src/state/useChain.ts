@@ -4,17 +4,21 @@ import { chainReducer } from './chainReducer'
 import { normalizeChain } from '../lib/chainStorage'
 import { funnelPreset, presets } from '../lib/presets'
 
-const STORAGE_KEY = 'markov-transitions:chain'
-const CUSTOM_STORAGE_KEY = 'markov-transitions:custom-chain'
+const STORAGE_KEY = 'watershed:chain'
+const CUSTOM_STORAGE_KEY = 'watershed:custom-chain'
+// Read once for visitors with a chain saved under the pre-rename keys, so
+// the rebrand doesn't quietly discard anyone's in-progress custom chain.
+const LEGACY_STORAGE_KEY = 'markov-transitions:chain'
+const LEGACY_CUSTOM_STORAGE_KEY = 'markov-transitions:custom-chain'
 
 /**
  * Everything read back from storage goes through `normalizeChain` — it was
  * written by whatever version of the app the visitor last used, so it may be
  * missing fields the code now requires, or be a half-written record.
  */
-function readStored(key: string): Chain | null {
+function readStored(key: string, legacyKey: string): Chain | null {
   try {
-    const raw = localStorage.getItem(key)
+    const raw = localStorage.getItem(key) ?? localStorage.getItem(legacyKey)
     if (!raw) return null
     return normalizeChain(JSON.parse(raw), presets)
   } catch { /* unparseable → treat as absent */ }
@@ -22,13 +26,13 @@ function readStored(key: string): Chain | null {
 }
 
 function loadInitial(): Chain {
-  return readStored(STORAGE_KEY) ?? funnelPreset
+  return readStored(STORAGE_KEY, LEGACY_STORAGE_KEY) ?? funnelPreset
 }
 
 /** The user's own chain, saved separately from whichever chain is currently
  * on screen so it survives switching to a preset and back. */
 export function loadSavedCustomChain(): Chain | null {
-  return readStored(CUSTOM_STORAGE_KEY)
+  return readStored(CUSTOM_STORAGE_KEY, LEGACY_CUSTOM_STORAGE_KEY)
 }
 
 function persist(chain: Chain) {

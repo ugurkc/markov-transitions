@@ -1,8 +1,10 @@
-# Markov Transitions
+# Watershed
 
 An interactive article and tool for modeling player lifecycles — onboarding,
-engagement, churn, and win-back — as Markov chains. Build a chain of states
-and transitions on an editable canvas, then run calculators for:
+engagement, churn, and win-back — as Markov chains. You can't move the
+destination directly; you can only reshape the path that leads there. Build a
+chain of states and transitions on an editable canvas, then run calculators
+for:
 
 - **Cohort simulation** — designate one state as the input (where new players
   join) and one as the output (where players leave), painted green/red on the
@@ -23,7 +25,7 @@ and transitions on an editable canvas, then run calculators for:
   an absorbing state this trends toward 100% there, showing that everyone
   gets there eventually
 
-**Live site:** https://ugurkc.github.io/markov-transitions/
+**Live site:** https://ugurkc.github.io/watershed/
 
 ## Local development
 
