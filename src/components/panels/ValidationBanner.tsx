@@ -25,7 +25,7 @@ export function ValidationBanner({ chain, validation }: ValidationBannerProps) {
       <div className="chip-row">
         {validation.invalidStateIds.map((id) => (
           <span className="chip" key={id}>
-            {names.get(id) ?? id} (&Sigma; = {(validation.rowSums[id] ?? 0).toFixed(2)})
+            {names.get(id) ?? id} (&Sigma; = {(validation.rowSums[id] ?? 0).toFixed(3)})
           </span>
         ))}
       </div>

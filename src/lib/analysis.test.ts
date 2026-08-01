@@ -75,6 +75,11 @@ describe('absorptionAnalysis', () => {
     expect(dup.absorptionProbs).toEqual(r.absorptionProbs)
     expect(dup.expectedSteps).toEqual(r.expectedSteps)
   })
+  it('handles a chain with no transient states (single absorbing state)', () => {
+    const all = absorptionAnalysis([[1]], [0])
+    expect(all.absorptionProbs).toEqual([[1]])
+    expect(all.expectedSteps).toEqual([0])
+  })
 })
 
 describe('steadyState', () => {

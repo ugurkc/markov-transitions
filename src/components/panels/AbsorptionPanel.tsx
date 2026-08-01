@@ -25,8 +25,11 @@ export function AbsorptionPanel({ chain, matrix, absorbingIds }: AbsorptionPanel
       : transientStates[0]?.id
 
   const analysis = useMemo<
-    { result: AbsorptionResult; error?: undefined } | { result?: undefined; error: string }
+    | { result: AbsorptionResult; error?: undefined }
+    | { result?: undefined; error: string }
+    | null
   >(() => {
+    if (transientStates.length === 0) return null
     const absorbingIdx = chain.states
       .map((s, i) => (absorbingSet.has(s.id) ? i : -1))
       .filter((i) => i >= 0)
@@ -35,7 +38,7 @@ export function AbsorptionPanel({ chain, matrix, absorbingIds }: AbsorptionPanel
     } catch (err) {
       return { error: err instanceof Error ? err.message : String(err) }
     }
-  }, [chain.states, matrix, absorbingSet])
+  }, [chain.states, matrix, absorbingSet, transientStates.length])
 
   const absorbingNames = absorbingIds
     .map((id) => chain.states.find((s) => s.id === id)?.name ?? id)
@@ -50,10 +53,10 @@ export function AbsorptionPanel({ chain, matrix, absorbingIds }: AbsorptionPanel
         analysis. A long-run equilibrium isn&apos;t meaningful here because all
         probability eventually collects in the absorbing states.
       </p>
-      {analysis.error !== undefined ? (
-        <p className="inline-warning">{analysis.error}</p>
-      ) : transientStates.length === 0 ? (
+      {analysis === null ? (
         <p className="panel-note">Every state is absorbing — nothing ever moves.</p>
+      ) : analysis.error !== undefined ? (
+        <p className="inline-warning">{analysis.error}</p>
       ) : (
         <>
           <label className="field">

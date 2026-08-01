@@ -31,6 +31,12 @@ export function absorptionAnalysis(p: Matrix, absorbingIdx: number[]): Absorptio
     }
   }
   const transient = Array.from({ length: n }, (_, i) => i).filter((i) => !absorbing.has(i))
+  if (transient.length === 0) {
+    // Every state is absorbing: each absorbs at itself immediately.
+    const absorptionProbs = Array.from({ length: n }, () => Array<number>(n).fill(0))
+    absorbingUnique.forEach((i) => { absorptionProbs[i][i] = 1 })
+    return { absorptionProbs, expectedSteps: Array<number>(n).fill(0) }
+  }
   const q = transient.map((i) => transient.map((j) => p[i][j]))
   const r = transient.map((i) => absorbingUnique.map((j) => p[i][j]))
   let nMat: Matrix

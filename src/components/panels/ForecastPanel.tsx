@@ -34,17 +34,30 @@ export function ForecastPanel({ chain, matrix }: ForecastPanelProps) {
     setStartChoice(value)
   }
 
-  // null = custom mix invalid (doesn't sum to 1) → don't compute.
-  const start = useMemo<Vector | null>(() => {
+  // Either a valid start vector or the warning explaining why there is none.
+  const startResult = useMemo<
+    { vector: Vector; warning?: undefined } | { vector?: undefined; warning: string }
+  >(() => {
     if (!isCustom) {
-      return chain.states.map((s) => (s.id === startId ? 1 : 0))
+      return { vector: chain.states.map((s) => (s.id === startId ? 1 : 0)) }
     }
     const values = chain.states.map((s) => Number(mixInputs[s.id] ?? '0'))
-    if (values.some((v) => !Number.isFinite(v))) return null
+    if (
+      values.some(
+        (v) => !Number.isFinite(v) || v < -PROB_TOLERANCE || v > 1 + PROB_TOLERANCE,
+      )
+    ) {
+      return { warning: 'Each custom mix entry must be a number between 0 and 1.' }
+    }
     const sum = values.reduce((a, v) => a + v, 0)
-    if (Math.abs(sum - 1) > PROB_TOLERANCE) return null
-    return values
+    if (Math.abs(sum - 1) > PROB_TOLERANCE) {
+      return {
+        warning: `The custom mix must sum to 1 (currently Σ = ${sum.toFixed(3)}).`,
+      }
+    }
+    return { vector: values }
   }, [chain.states, startId, isCustom, mixInputs])
+  const start = startResult.vector ?? null
 
   const final = useMemo(() => {
     if (!start || chain.states.length === 0) return null
@@ -81,8 +94,8 @@ export function ForecastPanel({ chain, matrix }: ForecastPanelProps) {
               />
             </label>
           ))}
-          {start === null && (
-            <p className="inline-warning">The custom mix must sum to 1.</p>
+          {startResult.warning !== undefined && (
+            <p className="inline-warning">{startResult.warning}</p>
           )}
         </div>
       )}
