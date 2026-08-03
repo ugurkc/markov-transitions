@@ -6,7 +6,7 @@
 
 **Architecture:** Multi-repo with native GitHub Pages paths — a new `ugurkc/ugurkc.github.io` repo (Astro, one index page, publishings from `src/data/publishings.yaml`) serves the root; existing project repos like `ugurkc/watershed` keep serving under `/<repo-name>/` with their own Actions deploys. Design doc: `docs/plans/2026-08-03-personal-site-hub-design.md`.
 
-**Tech Stack:** Astro 5, `@rollup/plugin-yaml` (YAML import), Vitest (data-file validation), GitHub Actions Pages deploy (same shape as Watershed's `deploy.yml`).
+**Tech Stack:** Astro 7 (bumped from 5 during Task 1 code review — security advisories are only patched in 7.1.6+), `@rollup/plugin-yaml` (YAML import), Vitest (data-file validation), GitHub Actions Pages deploy (same shape as Watershed's `deploy.yml`).
 
 **Repos touched:**
 - NEW: `/Users/ugurkoc/repos/ugurkc.github.io` → `github.com/ugurkc/ugurkc.github.io`
@@ -38,6 +38,7 @@ git init -b main
 node_modules/
 dist/
 .astro/
+.DS_Store
 ```
 
 **Step 3: Write `package.json`**
@@ -48,6 +49,9 @@ dist/
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -55,7 +59,7 @@ dist/
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "astro": "^5.0.0"
+    "astro": "^7.1.6"
   },
   "devDependencies": {
     "@rollup/plugin-yaml": "^4.1.2",
@@ -102,7 +106,7 @@ declare module '*.yaml' {
 **Step 7: Install and verify**
 
 Run: `npm install && npx astro --version`
-Expected: prints an Astro 5.x version, no errors.
+Expected: prints an Astro 7.x version, no errors.
 
 **Step 8: Commit**
 
