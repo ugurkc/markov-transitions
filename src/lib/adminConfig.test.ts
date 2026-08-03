@@ -44,6 +44,8 @@ describe('admin config', () => {
       name: 'github',
       repo: 'ugurkc/watershed',
       branch: 'main',
+      // token-only: the OAuth button needs an auth gateway we don't run
+      auth_methods: ['token'],
     })
   })
 
