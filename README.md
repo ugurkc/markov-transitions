@@ -37,6 +37,31 @@ npm run build    # type-check and build for production
 npm run lint     # run oxlint
 ```
 
+## Editing the essay text
+
+The essay prose is editable in the browser at
+**<https://ugurkc.github.io/watershed/admin/>** (Sveltia CMS, vendored in
+`public/admin/`). Sign-in uses the same GitHub fine-grained access token as
+the hub site — setup steps in the
+[hub README](https://github.com/ugurkc/ugurkc.github.io#editing-content-no-code).
+
+The content model:
+
+- `src/content/sections/*.md` — one file per essay section. Frontmatter:
+  `order` (drives the sequence), optional `id` (the anchor for deep links),
+  optional `label` (a section with a label gets a sidebar entry; requires an
+  `id`), optional `heading`. The body is the section's markdown prose.
+- `src/content/meta.md` — the essay header: `eyebrow` and `title` in the
+  frontmatter; the body is the subtitle, which must stay a single paragraph.
+
+Every save commits to `main`, which runs the full CI suite (156 tests,
+including content-shape checks and an admin-config drift guard) before
+deploying — a bad edit never deploys; the live site stays on the last good
+version.
+
+Prefer files? Edit the markdown under `src/content/` directly and push —
+same pipeline.
+
 ## Status
 
 The interactive canvas, calculators, and article prose are all in place.
