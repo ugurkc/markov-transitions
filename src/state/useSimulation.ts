@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Chain } from '../lib/types'
 import { buildMatrix, validateChain } from '../lib/chain'
 import {
@@ -165,11 +165,22 @@ export function useSimulation(chain: Chain): Simulation {
     ],
   )
 
+  // Set by play() just before it draws a new seed, so the rewind effect
+  // below knows to keep playing through its own reset instead of pausing
+  // the run it was asked to start.
+  const resumeAfterResetRef = useRef(false)
+  // Guards against React dev-mode's double effect invocation re-applying
+  // (and thereby clobbering) resumeAfterResetRef for the same signature.
+  const appliedSignatureRef = useRef<string | null>(null)
+
   // Rewind whenever the run itself changes — a half-played animation of a
   // chain that no longer exists would be misleading.
   useEffect(() => {
+    if (appliedSignatureRef.current === signature) return
+    appliedSignatureRef.current = signature
     setPos(0)
-    setPlaying(false)
+    setPlaying(resumeAfterResetRef.current)
+    resumeAfterResetRef.current = false
   }, [signature])
 
   const lastPeriod = frames ? frames.length - 1 : 0
@@ -218,9 +229,16 @@ export function useSimulation(chain: Chain): Simulation {
   }, [])
 
   const play = useCallback(() => {
-    setPos((p) => (p >= lastPeriod ? 0 : p))
+    // Starting a run from the beginning (fresh, reset, or replaying a
+    // finished one) draws a new seed, so replays don't repeat the same
+    // outcome. Resuming a paused mid-run animation keeps its seed.
+    if (pos === 0 || pos >= lastPeriod) {
+      resumeAfterResetRef.current = true
+      setSeed(randomSeed())
+      setPos(0)
+    }
     setPlaying(true)
-  }, [lastPeriod])
+  }, [pos, lastPeriod])
 
   const pause = useCallback(() => setPlaying(false), [])
 
