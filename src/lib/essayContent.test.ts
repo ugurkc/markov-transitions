@@ -39,6 +39,11 @@ describe('essay content', () => {
     expect(meta.subtitle.trim().length).toBeGreaterThan(40)
   })
 
+  it('meta subtitle is a single paragraph', () => {
+    // a blank line (e.g. added by a CMS editor) would render multiple p.subtitle elements
+    expect(loadMeta().subtitle).not.toMatch(/\n[ \t]*\n/)
+  })
+
   it('bodies contain no raw HTML tags', () => {
     // react-markdown silently drops raw HTML — any tag in a body is silent content loss
     for (const s of sections) expect(s.body, `order ${s.order}`).not.toMatch(/<[a-zA-Z][^>]*>/)

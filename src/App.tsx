@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import Markdown from 'react-markdown'
 import { ChainCanvas } from './components/ChainCanvas'
 import { MatrixPanel } from './components/MatrixPanel'
@@ -20,6 +21,36 @@ const SECTIONS = [
   ...ESSAY_SECTIONS.filter((s) => s.id && s.label).map((s) => ({ id: s.id!, label: s.label! })),
 ]
 
+/**
+ * The essay's static prose (header + sections). META and ESSAY_SECTIONS are
+ * module constants, so this takes no props; memo() makes React skip it when
+ * App re-renders (~60fps during simulation playback and canvas drags), so the
+ * markdown pipeline runs exactly once per page load.
+ */
+const ArticleBody = memo(function ArticleBody() {
+  return (
+    <>
+      <header className="article-header" id="intro">
+        <a className="home-link" href="https://ugurkc.github.io/">
+          ← ugurkc.github.io
+        </a>
+        <p className="eyebrow">{META.eyebrow}</p>
+        <h1>{META.title}</h1>
+        <Markdown components={{ p: (props) => <p className="subtitle" {...props} /> }}>
+          {META.subtitle}
+        </Markdown>
+      </header>
+
+      {ESSAY_SECTIONS.map((s) => (
+        <section key={s.order} id={s.id}>
+          {s.heading && <h2>{s.heading}</h2>}
+          <Markdown>{s.body}</Markdown>
+        </section>
+      ))}
+    </>
+  )
+})
+
 function App() {
   const { chain, dispatch } = useChain()
   const [theme, setTheme] = useTheme()
@@ -34,23 +65,7 @@ function App() {
       <main>
         <div className="content-layout">
           <article className="article">
-            <header className="article-header" id="intro">
-              <a className="home-link" href="https://ugurkc.github.io/">
-                ← ugurkc.github.io
-              </a>
-              <p className="eyebrow">{META.eyebrow}</p>
-              <h1>{META.title}</h1>
-              <Markdown components={{ p: (props) => <p className="subtitle" {...props} /> }}>
-                {META.subtitle}
-              </Markdown>
-            </header>
-
-            {ESSAY_SECTIONS.map((s) => (
-              <section key={s.order} id={s.id}>
-                {s.heading && <h2>{s.heading}</h2>}
-                <Markdown>{s.body}</Markdown>
-              </section>
-            ))}
+            <ArticleBody />
 
             <footer className="article-footer">
               <a href={REPO_URL}>Source on GitHub</a>
