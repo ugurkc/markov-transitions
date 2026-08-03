@@ -35,6 +35,9 @@ function App() {
         <div className="content-layout">
           <article className="article">
             <header className="article-header" id="intro">
+              <a className="home-link" href="https://ugurkc.github.io/">
+                ← ugurkc.github.io
+              </a>
               <p className="eyebrow">Player lifecycles as Markov chains</p>
               <h1>Watershed</h1>
               <p className="subtitle">

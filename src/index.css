@@ -289,6 +289,19 @@ main {
   margin-bottom: 8px;
 }
 
+.home-link {
+  display: inline-block;
+  margin-bottom: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--muted);
+}
+
+.home-link:hover {
+  color: var(--accent);
+}
+
 .eyebrow {
   margin: 0 0 10px;
   font-size: 12px;
