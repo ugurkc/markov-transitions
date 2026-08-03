@@ -38,39 +38,48 @@ function App() {
               <p className="eyebrow">Player lifecycles as Markov chains</p>
               <h1>Watershed</h1>
               <p className="subtitle">
-                By the time you reach the bottom of this page, you&rsquo;ll be
-                able to build a living model of how your players move &mdash;
-                and prove to yourself that you can&rsquo;t move the
-                destination, only the path that leads there.
+                What you stumbled upon is <strong>a new lens</strong> to look
+                at how people move in the experiences you craft for them. By
+                the time you gobble up all of the information here, you will
+                be able to make sense of previously enigmatic motions of the
+                masses by modeling the player journey. The premise: instead
+                of <em>scooping water from where it pools to where we want
+                it</em>, we will obtain the tools needed to{' '}
+                <strong>move the riverbed</strong>.
               </p>
             </header>
 
             <section>
               <p>
-                Every player who has ever touched your game is, in a very real
-                sense, just&nbsp;<em>moving</em>. They arrive as strangers,
-                poke around the tutorial, maybe fall in love with your
-                progression system, maybe get bored and wander off. If you
-                squint, a player&rsquo;s whole relationship with your game is
-                a sequence of small decisions: stay a little longer, or drift
-                away.
+                Due to work, I consistently talk to a lot of people that
+                build and manage games about where they are and where they
+                want to go. In an industry driven by passion, watching them
+                chase their ambitions with total conviction is inspiring to
+                say the least. Without exception, everyone articulates{' '}
+                <em>point A</em> and <em>point B</em> in meticulous detail,
+                the rewards they reap if they get to B, the consequences
+                they face if they stay at A, all clear, all well thought
+                out. When the conversation shifts to how they plan on
+                getting there, they dial it up to an eleven: the features
+                they could build, the bugs they could fix, the options they
+                think could cut the deal.
               </p>
               <p>
-                A Markov chain is a beautifully simple way to describe that
-                motion. The core idea fits in one sentence: wherever a player
-                is <em>right now</em>, there&rsquo;s some probability
-                they&rsquo;ll be in each possible state next week &mdash; and
-                that&rsquo;s all you need to know to predict what happens
-                next. No history, no baggage, just today.
+                Ask how they know the thing they&rsquo;re putting all their
+                chips in will actually work: how a reworked onboarding flow
+                or a tweaked reward curve turns into more players sticking
+                around six weeks later. <strong>Certainty evaporates.</strong>{' '}
+                Not because they haven&rsquo;t thought about it. Because
+                there&rsquo;s nothing to think it <em>with</em>. A few
+                thousand players making a few thousand small decisions a day
+                feels too chaotic to reason about, god forbid predict.
               </p>
               <p>
-                That&rsquo;s less intimidating than it sounds, and you
-                don&rsquo;t need a statistics background to use it. This page
-                walks through the idea with an actual player lifecycle
-                &mdash; tutorial, leveling, endgame, churn &mdash; that you
-                can rearrange, rewire, and even break with your own hands.
-                The tool is right there on the right, live the whole time you
-                read.
+                So underneath whatever confidence the room demands, the
+                honest answer is smaller than anyone says out loud:{' '}
+                <em>we think this will help.</em>{' '}
+                <strong>We won&rsquo;t know until we ship it and
+                watch.</strong>
               </p>
             </section>
 
