@@ -45,8 +45,11 @@ describe('essay content', () => {
   })
 
   it('bodies contain no raw HTML tags', () => {
-    // react-markdown silently drops raw HTML — any tag in a body is silent content loss
-    for (const s of sections) expect(s.body, `order ${s.order}`).not.toMatch(/<[a-zA-Z][^>]*>/)
+    // react-markdown escapes raw HTML — a tag in a body renders as visible
+    // literal text rather than markup. Commonmark autolinks (<https://…>,
+    // <me@example.com>) are valid markdown and stay allowed.
+    const rawHtml = /<(?![a-z][a-z0-9+.-]*:\/\/|[^\s@<>]+@)[a-zA-Z!/][^>]*>/
+    for (const s of sections) expect(s.body, `order ${s.order}`).not.toMatch(rawHtml)
   })
 
   it('bodies contain no ATX headings', () => {
