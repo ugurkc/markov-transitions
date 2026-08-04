@@ -107,14 +107,19 @@ describe('admin config', () => {
     expect(config.public_folder?.startsWith('/watershed/')).toBe(true)
   })
 
-  it('vendored bundle matches the pinned dependency', () => {
-    const vendored = readFileSync(resolve(repoRoot, 'public/admin/sveltia-cms.js'))
-    const packaged = readFileSync(
-      resolve(repoRoot, 'node_modules/@sveltia/cms/dist/sveltia-cms.js'),
-    )
-    expect(
-      vendored.equals(packaged),
-      'public/admin/sveltia-cms.js differs from node_modules/@sveltia/cms/dist/sveltia-cms.js — re-copy the bundle after npm update',
-    ).toBe(true)
+  it('copies the CMS bundle from the pinned dependency at build time', () => {
+    // The bundle is generated, not committed: dev/build copy it out of
+    // node_modules so it can never drift from the installed version.
+    const pkg = JSON.parse(
+      readFileSync(resolve(repoRoot, 'package.json'), 'utf8'),
+    ) as {
+      scripts: Record<string, string>
+      devDependencies: Record<string, string>
+    }
+    const copy = 'cp node_modules/@sveltia/cms/dist/sveltia-cms.js public/admin/'
+    expect(pkg.scripts.prebuild, 'build must refresh the admin bundle').toBe(copy)
+    expect(pkg.scripts.predev, 'dev must refresh the admin bundle').toBe(copy)
+    // exact pin (no ^ or ~): the lockfile hash is the integrity guarantee
+    expect(pkg.devDependencies['@sveltia/cms']).toMatch(/^\d+\.\d+\.\d+$/)
   })
 })
