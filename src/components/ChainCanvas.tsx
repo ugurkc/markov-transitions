@@ -22,6 +22,7 @@ import type { Chain } from '../lib/types'
 import { validateChain } from '../lib/chain'
 import { presets } from '../lib/presets'
 import type { ChainAction } from '../state/chainReducer'
+import { onPresetRequest } from '../lib/toolBridge'
 import { flushCustomChain, loadSavedCustomChain } from '../state/useChain'
 import type { Simulation } from '../state/useSimulation'
 import type { Theme } from '../state/useTheme'
@@ -227,6 +228,10 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
     [dispatch, chain, refit],
   )
 
+  // The essay's ToolLinks can request a preset switch ("switch to the
+  // win-back preset" in the prose actually switches it) — see toolBridge.ts.
+  useEffect(() => onPresetRequest(loadPreset), [loadPreset])
+
   const startCustom = useCallback(() => {
     if (chain.id === 'custom') return
     const saved = loadSavedCustomChain()
@@ -247,7 +252,7 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   }, [dispatch, chain.id, refit])
 
   return (
-    <div>
+    <div data-tool-anchor="canvas">
       <div className="preset-bar" role="group" aria-label="Chain presets">
         {presets.map((p) => (
           <button

@@ -64,7 +64,7 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
   const outputName = chain.states.find((s) => s.id === chain.outputStateId)?.name
 
   return (
-    <div className="panel retention-panel">
+    <div className="panel retention-panel" data-tool-anchor="retention">
       <h3>Retention</h3>
       <p className="panel-note">
         How many players are actually still active, week by week &mdash; new

@@ -15,7 +15,7 @@ export function SteadyStatePanel({ chain, matrix }: { chain: Chain; matrix: Matr
   }, [matrix, multipleClosed])
 
   return (
-    <div className="panel">
+    <div className="panel" data-tool-anchor="steady-state">
       <h3>Steady state</h3>
       <p className="panel-note">
         Run this chain forward forever: what fraction of players end up in each

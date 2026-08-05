@@ -27,7 +27,7 @@ export function SimulationPanel({ chain, dispatch, sim }: SimulationPanelProps) 
   const scale = Math.max(displayTotal, 1)
 
   return (
-    <div className="panel sim-panel">
+    <div className="panel sim-panel" data-tool-anchor="simulate">
       <h3>Simulate a cohort</h3>
 
       <p className="sim-group-label">Input &amp; output</p>

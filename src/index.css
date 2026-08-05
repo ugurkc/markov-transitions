@@ -1127,3 +1127,75 @@ a {
   min-width: 44px;
   text-align: right;
 }
+
+/* --- Essay ↔ tool links --- */
+
+/* Inline prose button that scrolls its target panel into view and pulses a
+   highlight on it. Styled as a link, not a button: it navigates attention. */
+.tool-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.tool-link:hover {
+  text-decoration-style: solid;
+}
+
+.tool-link-icon {
+  width: 0.7em;
+  height: 0.7em;
+  margin-left: 3px;
+  vertical-align: baseline;
+  stroke: currentColor;
+  fill: currentColor;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Room between a scrolled-to panel and the sidebar's edges, so the flash
+   ring isn't clipped against them. */
+[data-tool-anchor] {
+  scroll-margin: 16px;
+}
+
+.tool-flash {
+  animation: tool-flash 1.6s ease-out;
+}
+
+@keyframes tool-flash {
+  0% {
+    box-shadow: 0 0 0 3px var(--accent), 0 0 24px var(--accent-faint);
+  }
+  35% {
+    box-shadow: 0 0 0 3px var(--accent), 0 0 24px var(--accent-faint);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent, 0 0 24px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-flash {
+    animation: none;
+    /* Static ring instead of a pulse; JS removes the class either way. */
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+}

@@ -54,13 +54,34 @@ The content model:
 - `src/content/meta.md` — the essay header: `eyebrow` and `title` in the
   frontmatter; the body is the subtitle, which must stay a single paragraph.
 
-Every save commits to `main`, which runs the full CI suite (156 tests,
+Every save commits to `main`, which runs the full CI suite (161 tests,
 including content-shape checks and an admin-config drift guard) before
 deploying — a bad edit never deploys; the live site stays on the last good
 version.
 
 Prefer files? Edit the markdown under `src/content/` directly and push —
 same pipeline.
+
+### Linking prose to the tool
+
+Wherever the essay says "look at the matrix on the right," make it a link.
+A markdown link whose href uses the `#tool:` scheme renders as an inline
+button that scrolls the matching tool panel into view and pulses a
+highlight on it:
+
+```markdown
+Look at the [“Transition matrix” table](#tool:matrix) …
+[Switch to the **Win-back loop** preset](#tool:canvas?preset=preset-winback) …
+```
+
+Anchors are declared as `data-tool-anchor="…"` attributes on panel roots
+(currently: `canvas`, `simulate`, `retention`, `matrix`, `forecast`,
+`steady-state`). The optional `?preset=<id>` param actually loads that
+preset before focusing. CI validates every `#tool:` link against the
+declared anchors and real preset ids, so a typo fails the build instead of
+shipping a dead link. Implementation: `src/lib/toolBridge.ts` (the DOM
+contract), `src/components/ToolLink.tsx` (the inline button), `EssayLink`
+in `src/App.tsx` (the markdown mapping).
 
 ## Status
 

@@ -82,7 +82,7 @@ export function MatrixPanel({ chain, dispatch }: MatrixPanelProps) {
   }
 
   return (
-    <div className="panel matrix-panel">
+    <div className="panel matrix-panel" data-tool-anchor="matrix">
       <h3>Transition matrix</h3>
       <p className="panel-note">
         Each cell is the chance that a player currently in the row&apos;s state

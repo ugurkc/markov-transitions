@@ -32,7 +32,7 @@ export function ForecastPanel({ chain, matrix }: ForecastPanelProps) {
   }, [matrix, start, steps, chain.states.length])
 
   return (
-    <div className="panel">
+    <div className="panel" data-tool-anchor="forecast">
       <h3>Forecast</h3>
       {startName && (
         <p className="panel-note">

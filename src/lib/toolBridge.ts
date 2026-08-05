@@ -1,0 +1,52 @@
+/**
+ * The essay ↔ tool bridge, DOM side. The whole contract is DOM-level on
+ * purpose — no context, no refs threaded through the tree — which keeps the
+ * pattern portable to any future essay with a companion tool panel:
+ *
+ * - Tool panels opt in by putting `data-tool-anchor="<name>"` on their root.
+ * - `focusToolPanel(name)` scrolls that panel into view and pulses a
+ *   highlight on it (see the `.tool-flash` styles in index.css).
+ * - Links that should change the tool rather than just point at it go
+ *   through a CustomEvent: the prose side fires `requestPreset(id)`, and the
+ *   component that owns preset loading subscribes via `onPresetRequest`.
+ *
+ * The prose side of the contract is the `#tool:` markdown link scheme —
+ * see EssayLink in App.tsx and ToolLink.tsx.
+ */
+
+const FLASH_CLASS = 'tool-flash'
+const FLASH_MS = 1600
+
+export function focusToolPanel(anchor: string) {
+  const el = document.querySelector<HTMLElement>(
+    `[data-tool-anchor="${anchor}"]`,
+  )
+  if (!el) return
+  const reduceMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  ).matches
+  el.scrollIntoView({
+    behavior: reduceMotion ? 'auto' : 'smooth',
+    block: 'nearest',
+  })
+  // Restarting the animation needs the class to actually leave the DOM for
+  // a frame, hence remove → reflow → re-add.
+  el.classList.remove(FLASH_CLASS)
+  void el.offsetWidth
+  el.classList.add(FLASH_CLASS)
+  window.setTimeout(() => el.classList.remove(FLASH_CLASS), FLASH_MS)
+}
+
+const LOAD_PRESET_EVENT = 'watershed:load-preset'
+
+/** Ask whoever owns preset loading to switch presets. */
+export function requestPreset(id: string) {
+  window.dispatchEvent(new CustomEvent(LOAD_PRESET_EVENT, { detail: id }))
+}
+
+/** Subscribe to preset requests; returns the unsubscribe. */
+export function onPresetRequest(handler: (id: string) => void): () => void {
+  const listener = (e: Event) => handler((e as CustomEvent<string>).detail)
+  window.addEventListener(LOAD_PRESET_EVENT, listener)
+  return () => window.removeEventListener(LOAD_PRESET_EVENT, listener)
+}

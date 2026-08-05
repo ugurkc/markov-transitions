@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { loadMeta, loadSections, parseFrontmatter, parseSection } from './essayContent'
+import { presets } from './presets'
 
 describe('essay content', () => {
   const sections = loadSections()
@@ -55,6 +56,60 @@ describe('essay content', () => {
   it('bodies contain no ATX headings', () => {
     // headings live in frontmatter only
     for (const s of sections) expect(s.body, `order ${s.order}`).not.toMatch(/^#{1,6} /m)
+  })
+})
+
+describe('essay ↔ tool links', () => {
+  // The link scheme: [text](#tool:<anchor>) optionally + ?preset=<id>.
+  // Anchors must match a data-tool-anchor attribute that actually exists in
+  // a component, and preset ids must be real presets — so a typo in a CMS
+  // edit fails here instead of silently rendering a dead link.
+  const componentSources = Object.values(
+    import.meta.glob('../components/**/*.tsx', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    }) as Record<string, string>,
+  )
+  const declaredAnchors = new Set(
+    componentSources.flatMap((src) =>
+      [...src.matchAll(/data-tool-anchor="([^"]+)"/g)].map((m) => m[1]),
+    ),
+  )
+  const presetIds = new Set(presets.map((p) => p.id))
+  const toolLinks = loadSections().flatMap((s) =>
+    [...s.body.matchAll(/\]\((#tool:[^)]*)\)/g)].map((m) => ({
+      order: s.order,
+      href: m[1],
+    })),
+  )
+
+  it('components declare tool anchors', () => {
+    expect(declaredAnchors.size).toBeGreaterThan(0)
+  })
+
+  it('the essay actually uses the bridge', () => {
+    expect(toolLinks.length).toBeGreaterThan(0)
+  })
+
+  it('every #tool: link is well-formed', () => {
+    for (const { order, href } of toolLinks) {
+      expect(href, `order ${order}`).toMatch(/^#tool:[a-z][a-z-]*(\?preset=[a-z-]+)?$/)
+    }
+  })
+
+  it('every #tool: link targets a declared anchor', () => {
+    for (const { order, href } of toolLinks) {
+      const anchor = href.slice('#tool:'.length).split('?')[0]
+      expect(declaredAnchors, `order ${order}: ${href}`).toContain(anchor)
+    }
+  })
+
+  it('every preset param names a real preset', () => {
+    for (const { order, href } of toolLinks) {
+      const preset = new URLSearchParams(href.split('?')[1] ?? '').get('preset')
+      if (preset) expect(presetIds, `order ${order}: ${href}`).toContain(preset)
+    }
   })
 })
 
