@@ -17,6 +17,12 @@
 const FLASH_CLASS = 'tool-flash'
 const FLASH_MS = 1600
 
+// The canvas is the React Flow graph itself — its edges/arrowheads render
+// right up against the panel's own border, so the highlight ring visually
+// collided with them. Every other panel is a plain padded rectangle where
+// the ring reads cleanly, so only the canvas opts out.
+const NO_FLASH_ANCHORS = new Set(['canvas'])
+
 export function focusToolPanel(anchor: string) {
   const el = document.querySelector<HTMLElement>(
     `[data-tool-anchor="${anchor}"]`,
@@ -29,6 +35,7 @@ export function focusToolPanel(anchor: string) {
     behavior: reduceMotion ? 'auto' : 'smooth',
     block: 'nearest',
   })
+  if (NO_FLASH_ANCHORS.has(anchor)) return
   // Restarting the animation needs the class to actually leave the DOM for
   // a frame, hence remove → reflow → re-add.
   el.classList.remove(FLASH_CLASS)

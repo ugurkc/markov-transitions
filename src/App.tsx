@@ -119,11 +119,11 @@ function App() {
 
           <aside className="tool-sidebar">
             <ChainCanvas chain={chain} dispatch={dispatch} theme={theme} sim={sim} />
+            <MatrixPanel chain={chain} dispatch={dispatch} />
             <div className="sim-layout">
               <SimulationPanel chain={chain} dispatch={dispatch} sim={sim} />
               <RetentionChart chain={chain} sim={sim} />
             </div>
-            <MatrixPanel chain={chain} dispatch={dispatch} />
             <CalculatorsSection chain={chain} />
           </aside>
         </div>
