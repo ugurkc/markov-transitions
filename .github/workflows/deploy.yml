@@ -38,3 +38,9 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          # Default is 10 min. Raised after a stretch where GitHub's Pages
+          # publish queue sat in `deployment_queued` well past the default
+          # and the action cancelled its own deployment — the build and
+          # artifact were fine, only the publish handoff was slow.
+          timeout: 1800000
