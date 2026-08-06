@@ -86,17 +86,28 @@ export interface SteadyStateResult {
 }
 
 /**
- * Stationary distribution by power iteration on the lazy chain (P+I)/2,
- * which has the same stationary distribution and is always aperiodic.
+ * Where a cohort starting at `start` ends up in the long run: the forecast
+ * with the step count taken to infinity.
  *
- * The caller must ensure the chain has exactly one closed class (via
- * `closedClasses`); with two or more, the result is a start-dependent
- * mixture (here: the uniform-start limit), not "the" stationary distribution.
+ * Power-iterates the lazy chain (P+I)/2, which shares P's stationary
+ * distribution but is always aperiodic. That matters because a periodic
+ * chain's own forecast never settles (a 2-cycle just alternates forever);
+ * the lazy chain converges to the *time-average* share of each state, which
+ * is the meaningful answer to "where do players spend their time."
+ *
+ * Iterating from the caller's actual start vector rather than a uniform one
+ * also makes the reducible case correct: with two or more closed classes the
+ * long-run mix genuinely depends on where players began, and this returns
+ * that answer instead of an averaged-over-nothing fiction.
  */
-export function steadyState(p: Matrix, maxIter = 100_000, tol = 1e-12): SteadyStateResult {
-  const n = p.length
+export function longRunDistribution(
+  p: Matrix,
+  start: Vector,
+  maxIter = 100_000,
+  tol = 1e-12,
+): SteadyStateResult {
   const lazy = p.map((row, i) => row.map((x, j) => (x + (i === j ? 1 : 0)) / 2))
-  let v: Vector = Array(n).fill(1 / n)
+  let v: Vector = start.slice()
   for (let it = 0; it < maxIter; it++) {
     const nv = vecMat(v, lazy)
     const diff = nv.reduce((s, x, i) => s + Math.abs(x - v[i]), 0)
@@ -104,6 +115,38 @@ export function steadyState(p: Matrix, maxIter = 100_000, tol = 1e-12): SteadySt
     if (diff < tol) return { distribution: v, converged: true }
   }
   return { distribution: v, converged: false }
+}
+
+/**
+ * Stationary distribution from a uniform start.
+ *
+ * The caller must ensure the chain has exactly one closed class (via
+ * `closedClasses`); with two or more, the result is a start-dependent
+ * mixture (here: the uniform-start limit), not "the" stationary distribution.
+ */
+export function steadyState(p: Matrix, maxIter = 100_000, tol = 1e-12): SteadyStateResult {
+  return longRunDistribution(p, Array(p.length).fill(1 / p.length), maxIter, tol)
+}
+
+/**
+ * Does this chain's forecast keep oscillating instead of settling down?
+ *
+ * True for periodic chains: a 2-cycle alternates between states forever, so
+ * no step count is "the answer" and the infinite-horizon figure is a
+ * time-average rather than a destination. Detected empirically — run far
+ * enough out that a converging chain's consecutive steps are indistinguishable,
+ * then check whether one more step still moves anything.
+ */
+export function forecastOscillates(
+  p: Matrix,
+  start: Vector,
+  probeSteps = 512,
+  tol = 1e-6,
+): boolean {
+  let v: Vector = start.slice()
+  for (let i = 0; i < probeSteps; i++) v = vecMat(v, p)
+  const next = vecMat(v, p)
+  return next.reduce((s, x, i) => s + Math.abs(x - v[i]), 0) > tol
 }
 
 export interface DiagnosticsRow {

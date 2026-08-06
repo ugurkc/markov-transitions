@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { nStepForecast, absorptionAnalysis, steadyState, diagnostics, expectedTenure } from './analysis'
+import {
+  nStepForecast,
+  absorptionAnalysis,
+  steadyState,
+  longRunDistribution,
+  forecastOscillates,
+  diagnostics,
+  expectedTenure,
+} from './analysis'
 import { funnelPreset, winBackPreset } from './presets'
 import type { Chain } from './types'
 
@@ -98,6 +106,73 @@ describe('steadyState', () => {
   it('reports converged: false when maxIter is exhausted', () => {
     const r = steadyState([[0.9, 0.1], [0.5, 0.5]], 1)
     expect(r.converged).toBe(false)
+  })
+})
+
+describe('longRunDistribution', () => {
+  // The forecast panel's infinity setting: dragging the step count to the end
+  // should land exactly where the steady state used to be reported.
+  it('matches steadyState for an irreducible chain, whatever the start', () => {
+    const p = [[0.9, 0.1], [0.5, 0.5]]
+    for (const start of [[1, 0], [0, 1], [0.5, 0.5]]) {
+      const r = longRunDistribution(p, start)
+      expect(r.converged).toBe(true)
+      expect(r.distribution[0]).toBeCloseTo(5 / 6, 8)
+    }
+  })
+
+  it('agrees with a long finite forecast when the chain settles', () => {
+    const p = [[0.9, 0.1], [0.5, 0.5]]
+    const start = [1, 0]
+    const finite = nStepForecast(p, start, 500)
+    const infinite = longRunDistribution(p, start)
+    finite[500].forEach((x, i) => expect(x).toBeCloseTo(infinite.distribution[i], 8))
+  })
+
+  // Two absorbing states: where you start decides where you end up, so there
+  // is no single start-independent answer. Iterating from the real start
+  // vector gets this right where a uniform-start stationary solve cannot.
+  it('is start-dependent when the chain has two closed classes', () => {
+    const p = [[1, 0, 0], [0, 1, 0], [0.5, 0.5, 0]]
+    expect(longRunDistribution(p, [1, 0, 0]).distribution[0]).toBeCloseTo(1, 8)
+    expect(longRunDistribution(p, [0, 1, 0]).distribution[1]).toBeCloseTo(1, 8)
+    const fromC = longRunDistribution(p, [0, 0, 1]).distribution
+    expect(fromC[0]).toBeCloseTo(0.5, 8)
+    expect(fromC[1]).toBeCloseTo(0.5, 8)
+  })
+
+  it('gives the time-average for a periodic chain that never settles', () => {
+    const r = longRunDistribution([[0, 1], [1, 0]], [1, 0])
+    expect(r.converged).toBe(true)
+    expect(r.distribution[0]).toBeCloseTo(0.5, 8)
+  })
+})
+
+describe('forecastOscillates', () => {
+  it('is true for a 2-cycle, which alternates forever', () => {
+    expect(forecastOscillates([[0, 1], [1, 0]], [1, 0])).toBe(true)
+  })
+
+  it('is true for a 3-cycle', () => {
+    const p = [[0, 1, 0], [0, 0, 1], [1, 0, 0]]
+    expect(forecastOscillates(p, [1, 0, 0])).toBe(true)
+  })
+
+  it('is false once any self-loop breaks the cycle', () => {
+    const p = [[0.1, 0.9], [1, 0]]
+    expect(forecastOscillates(p, [1, 0])).toBe(false)
+  })
+
+  it('is false for absorbing and ergodic chains', () => {
+    expect(forecastOscillates([[1, 0], [0.5, 0.5]], [0, 1])).toBe(false)
+    expect(forecastOscillates([[0.9, 0.1], [0.5, 0.5]], [1, 0])).toBe(false)
+  })
+
+  // A periodic chain started exactly on its own stationary distribution sits
+  // still, so there is nothing to detect — the panel's note keys off the
+  // actual start, which is always a single state.
+  it('is false when a periodic chain starts already balanced', () => {
+    expect(forecastOscillates([[0, 1], [1, 0]], [0.5, 0.5])).toBe(false)
   })
 })
 

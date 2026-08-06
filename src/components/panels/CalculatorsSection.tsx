@@ -3,7 +3,6 @@ import type { Chain } from '../../lib/types'
 import { buildMatrix, validateChain } from '../../lib/chain'
 import { ValidationBanner } from './ValidationBanner'
 import { ForecastPanel } from './ForecastPanel'
-import { SteadyStatePanel } from './SteadyStatePanel'
 
 export function CalculatorsSection({ chain }: { chain: Chain }) {
   const validation = useMemo(() => validateChain(chain), [chain])
@@ -13,12 +12,7 @@ export function CalculatorsSection({ chain }: { chain: Chain }) {
   return (
     <section className="calculators">
       <ValidationBanner chain={chain} validation={validation} />
-      {showCalculators && (
-        <>
-          <ForecastPanel chain={chain} matrix={matrix} />
-          <SteadyStatePanel chain={chain} matrix={matrix} />
-        </>
-      )}
+      {showCalculators && <ForecastPanel chain={chain} matrix={matrix} />}
     </section>
   )
 }
