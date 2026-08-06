@@ -271,7 +271,7 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   }, [dispatch, chain.id, refit])
 
   return (
-    <div data-tool-anchor="canvas">
+    <div className="canvas-pane" data-tool-anchor="canvas">
       <div className="preset-bar" role="group" aria-label="Chain presets">
         {presets.map((p) => (
           <button
@@ -297,7 +297,6 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
       <div
         ref={wrapperRef}
         className="canvas-wrapper"
-        style={{ width: '100%', height: 480 }}
         onDoubleClick={onPaneDoubleClick}
       >
         <ReactFlow

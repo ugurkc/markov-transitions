@@ -10,4 +10,6 @@ Go back to that room from the start of this page, the one full of people who can
 
 That’s the whole premise, restated one last time: you were never going to move the water by hand. You just needed to see the riverbed.
 
+If you’d rather stop reading and start building, [the playground](play/) is this same tool with the writing out of the way and the graph given room to breathe. Whatever you make there is waiting for you back here.
+
 If you build something with this, or find a bug, the source is right here. Link in the footer. Happy modeling.

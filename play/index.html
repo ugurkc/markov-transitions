@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Watershed playground: build your own player lifecycle</title>
+    <meta
+      name="description"
+      content="The Watershed simulator on its own: build a chain of player states and transitions, run a cohort through it, and watch the retention and forecast numbers move."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Watershed playground: build your own player lifecycle" />
+    <meta
+      property="og:description"
+      content="The Watershed simulator on its own: build a chain of player states and transitions, run a cohort through it, and watch the retention and forecast numbers move."
+    />
+    <meta property="og:url" content="https://ugurkc.github.io/watershed/play/" />
+    <script>
+      (function () {
+        var stored = localStorage.getItem('theme');
+        var theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main-play.tsx"></script>
+  </body>
+</html>

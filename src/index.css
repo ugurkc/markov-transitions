@@ -249,18 +249,42 @@ main {
   scroll-margin-top: 28px;
 }
 
-/* Pinned in the viewport as the article scrolls past, with its own
-   scrollbar once its content — canvas, sim, matrix, calculators — outgrows
-   the available height. Mirrors the TOC sidebar's own sticky recipe. */
+/* A fixed, full-height column the article scrolls past. The graph is pinned
+   in the upper part and never moves; only the panels below it scroll.
+   Before this, the whole column was one scroll region holding ~3x its own
+   height, so focusing a result (a before/after chip, a prose link) scrolled
+   the chain completely off screen at exactly the moment the reader was meant
+   to watch it change. */
 .tool-sidebar {
   flex: 1 1 480px;
   min-width: 480px;
   position: sticky;
-  top: 24px;
-  max-height: calc(100vh - 48px);
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  padding: 18px 4px 18px 0;
+}
+
+/* Holds the preset tabs, the toolbar and the graph: sized by its content and
+   never allowed to shrink, so the graph is always the thing you can see. */
+.canvas-pane {
+  flex: 0 0 auto;
+}
+
+/* Everything else, in its own scroll region. min-height:0 is what lets a
+   flex child actually scroll instead of stretching its parent. */
+.tool-detail-pane {
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 4px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-right: 4px;
 }
 
 /* Deliberately a higher breakpoint than the TOC sidebar's own (1099px): the
@@ -276,11 +300,28 @@ main {
 
   .tool-sidebar {
     position: static;
-    max-height: none;
+    /* flex-basis is a *height* basis once .content-layout turns into a
+       column, so the sidebar has to opt out of flexing here or it gets
+       pinned to 480px tall while its content spills out of the box. */
+    flex: none;
+    height: auto;
     overflow: visible;
     width: 100%;
     padding: 0;
     margin-top: 8px;
+  }
+
+  /* Stacked single column: nothing is pinned, so the detail pane stops being
+     its own scroll region and just flows with the page. It has to drop its
+     flex sizing too -- a 0 flex-basis contributes nothing to an auto-height
+     parent, which collapses the whole tool to a few hundred pixels. */
+  .tool-detail-pane {
+    flex: none;
+    overflow: visible;
+  }
+
+  .canvas-wrapper {
+    height: clamp(320px, 52vh, 520px);
   }
 }
 
@@ -457,6 +498,10 @@ a {
 /* --- Canvas --- */
 
 .canvas-wrapper {
+  /* Was a hardcoded 480px inline style. Now it scales with the viewport so
+     the pinned graph and the scrolling panels below it can share one screen. */
+  width: 100%;
+  height: clamp(230px, 34vh, 390px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -662,7 +707,6 @@ a {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: 16px;
 }
 
 .sim-panel,
@@ -1332,4 +1376,85 @@ a {
   color: var(--ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* --- Playground page (the simulator without the essay) --- */
+
+.play-page {
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.play-header {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 24px 0;
+}
+
+.play-header h1 {
+  margin: 10px 0 8px;
+  font-size: 1.9rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.play-intro {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Graph on the left with the room it never gets beside the essay; the panels
+   ride in their own scroll column on the right. */
+.play-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 22px 24px 40px;
+}
+
+.play-canvas {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: sticky;
+  top: 22px;
+}
+
+/* Overrides the essay layout's viewport-scaled canvas: here the graph is the
+   whole point, so it takes the height the reading layout couldn't spare. */
+.play-canvas .canvas-wrapper {
+  height: clamp(420px, calc(100vh - 220px), 760px);
+}
+
+.play-panels {
+  flex: 0 0 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* One column once the graph would be squeezed narrower than it is tall. */
+@media (max-width: 1180px) {
+  .play-layout {
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .play-canvas {
+    position: static;
+    width: 100%;
+  }
+
+  .play-canvas .canvas-wrapper {
+    height: clamp(340px, 56vh, 560px);
+  }
+
+  .play-panels {
+    flex: none;
+    width: 100%;
+  }
 }

@@ -144,14 +144,20 @@ function App() {
             </footer>
           </article>
 
+          {/* The graph is pinned; only the panels beneath it scroll. Focusing
+              a result — from a before/after chip or a prose link — must never
+              push the chain off screen, which is what a single scrolling
+              column did. */}
           <aside className="tool-sidebar">
             <ChainCanvas chain={chain} dispatch={dispatch} theme={theme} sim={sim} />
-            <MatrixPanel chain={chain} dispatch={dispatch} />
-            <div className="sim-layout">
-              <SimulationPanel chain={chain} dispatch={dispatch} sim={sim} />
-              <RetentionChart chain={chain} sim={sim} />
+            <div className="tool-detail-pane">
+              <MatrixPanel chain={chain} dispatch={dispatch} />
+              <div className="sim-layout">
+                <SimulationPanel chain={chain} dispatch={dispatch} sim={sim} />
+                <RetentionChart chain={chain} sim={sim} />
+              </div>
+              <CalculatorsSection chain={chain} />
             </div>
-            <CalculatorsSection chain={chain} />
           </aside>
         </div>
       </main>
