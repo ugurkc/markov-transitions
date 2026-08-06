@@ -87,7 +87,7 @@ export function MatrixPanel({ chain, dispatch }: MatrixPanelProps) {
       <p className="panel-note">
         Each cell is the chance that a player currently in the row&apos;s state
         will be in the column&apos;s state one step later. Every row must total
-        1 — a player always goes <em>somewhere</em>, even if that means staying
+        1: a player always goes <em>somewhere</em>, even if that means staying
         put (the diagonal).
         {example && (
           <>

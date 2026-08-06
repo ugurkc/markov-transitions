@@ -37,7 +37,7 @@ export function ForecastPanel({ chain, matrix }: ForecastPanelProps) {
       {startName && (
         <p className="panel-note">
           Starting everyone in <strong>{startName}</strong>
-          {chain.inputStateId ? '' : ' (no input state chosen above yet)'} &mdash;
+          {chain.inputStateId ? '' : ' (no input state chosen above yet)'},
           where would they be N weeks later?
         </p>
       )}

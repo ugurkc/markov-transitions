@@ -102,7 +102,7 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
     <div className="panel retention-panel" data-tool-anchor="retention">
       <h3>Retention</h3>
       <p className="panel-note">
-        How many players are actually still active, week by week &mdash; new
+        How many players are actually still active, week by week: new
         arrivals push it up, players reaching{' '}
         {outputName ? <strong>{outputName}</strong> : 'the output state'} pull
         it down.
@@ -121,7 +121,7 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
             {baseline ? 'Clear baseline' : 'Pin as baseline'}
           </button>
           {baseline !== null && !baselineActive && (
-            <span className="hint">Baseline hidden &mdash; weeks count changed</span>
+            <span className="hint">Baseline hidden: weeks count changed</span>
           )}
         </div>
       )}

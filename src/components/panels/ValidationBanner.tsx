@@ -19,7 +19,7 @@ export function ValidationBanner({ chain, validation }: ValidationBannerProps) {
   return (
     <div className="banner-error" role="alert">
       <p>
-        Calculations are paused — these states&apos; outgoing probabilities
+        Calculations are paused. These states&apos; outgoing probabilities
         don&apos;t sum to 1:
       </p>
       <div className="chip-row">

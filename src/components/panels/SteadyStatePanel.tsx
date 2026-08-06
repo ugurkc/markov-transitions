@@ -31,21 +31,21 @@ export function SteadyStatePanel({ chain, matrix }: { chain: Chain; matrix: Matr
         {absorbingName ? (
           <>
             Because <strong>{absorbingName}</strong> is a one-way door, that
-            number trends toward 100% there &mdash; everyone gets there
-            eventually, it&rsquo;s just a question of when.
+            number trends toward 100% there: everyone gets there eventually,
+            it&rsquo;s just a question of when.
           </>
         ) : (
           <>
-            This chain has no one-way doors, so nobody is stuck anywhere
-            &mdash; players keep cycling and the mix settles into a stable
-            balance instead.
+            This chain has no one-way doors, so nobody is stuck anywhere:
+            players keep cycling and the mix settles into a stable balance
+            instead.
           </>
         )}
       </p>
       {multipleClosed ? (
         <p className="inline-warning">
-          This chain has multiple closed groups — the long-run mix depends on
-          where players start, so no single steady state exists.
+          This chain has multiple closed groups, so the long-run mix depends
+          on where players start: no single steady state exists.
         </p>
       ) : result === null ? null : !result.converged ? (
         <p className="inline-warning">Did not converge.</p>

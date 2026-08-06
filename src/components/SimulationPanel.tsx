@@ -165,8 +165,8 @@ export function SimulationPanel({ chain, dispatch, sim }: SimulationPanelProps) 
       <p className="panel-note sim-explainer">
         Drop players into any state and watch them move, one week at a time.
         Each player rolls their own dice against the transition
-        probabilities &mdash; so unlike the exact forecast further down,
-        results wobble from run to run, exactly the way a real cohort does.
+        probabilities, so unlike the exact forecast further down, results
+        wobble from run to run, exactly the way a real cohort does.
       </p>
     </div>
   )
