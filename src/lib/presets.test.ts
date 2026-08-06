@@ -127,6 +127,15 @@ describe('free-to-paid preset (Free/Payer/Whale, Lapsed absorbing)', () => {
     expect(steps('free')).toBeLessThan(steps('payer'))
     expect(steps('payer')).toBeLessThan(steps('whale'))
   })
+
+  // Pins the figures sample-questions.md quotes: "about 7.3 weeks", "8.0",
+  // "12.0" for a free/paying/whale player's expected time before lapsing.
+  it('expected weeks before lapsing: Free 7.3, Payer 8.0, Whale 12.0', () => {
+    const steps = stepsToAbsorption(monetizationPreset, 'lapsed')
+    expect(steps('free')).toBeCloseTo(7.3, 1)
+    expect(steps('payer')).toBeCloseTo(8.0, 1)
+    expect(steps('whale')).toBeCloseTo(12.0, 1)
+  })
 })
 
 describe('all presets', () => {

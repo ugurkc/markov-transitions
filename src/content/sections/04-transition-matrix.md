@@ -1,5 +1,5 @@
 ---
-order: 3
+order: 4
 id: transition-matrix
 label: The transition matrix
 heading: The transition matrix

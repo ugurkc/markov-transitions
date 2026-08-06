@@ -1,5 +1,5 @@
 ---
-order: 4
+order: 5
 id: try-it
 label: Try it yourself
 heading: "Try it: build your own player lifecycle"

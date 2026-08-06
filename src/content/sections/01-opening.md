@@ -9,3 +9,5 @@ Ask how they know the thing they’re putting all their chips in will actually w
 So underneath whatever confidence the room demands, the honest answer is smaller than anyone says out loud: *we think this will help.* **We won’t know until we ship it and watch.**
 
 The main point of this essay isn’t a denial of the fact that most things customer-facing are best tested in the real world. What I want to get across is this: when you have multiple options and limited capacity to test, thinking about the game as a system — people moving between states, not a list of features to ship — lets you make healthy bets about which path is actually worth the sprint.
+
+Questions like “is onboarding actually the problem, or does it just feel that way” or “which of two ideas is actually worth the sprint” stop being guesses. A few of those, worked all the way through, are coming up next.
