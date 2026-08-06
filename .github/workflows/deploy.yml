@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      asset: ${{ steps.fingerprint.outputs.asset }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -26,9 +28,22 @@ jobs:
       - run: npm ci
       - run: npm run test
       - run: npm run build
+      # Vite hashes asset filenames by content, so the CSS name is an exact
+      # fingerprint of this particular build. The deploy job uses it to prove
+      # *this* build reached production — not merely that some build did.
+      - id: fingerprint
+        run: |
+          asset=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.css' dist/index.html | head -1)
+          if [ -z "$asset" ]; then
+            echo "::error::Could not fingerprint the build - no hashed CSS found in dist/index.html"
+            exit 1
+          fi
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "This build should end up serving: $asset"
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -36,11 +51,29 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # actions/deploy-pages clamps its own `timeout` input down to a
+      # hard-coded 10-minute MAX_TIMEOUT, so it cannot be told to wait
+      # longer. When Pages' publish queue runs slower than that, the action
+      # cancels and reports failure even though the publish still lands.
+      # Its verdict alone is therefore not trustworthy; the step below is
+      # what actually decides whether this deploy worked.
       - id: deployment
         uses: actions/deploy-pages@v5
-        with:
-          # Default is 10 min. Raised after a stretch where GitHub's Pages
-          # publish queue sat in `deployment_queued` well past the default
-          # and the action cancelled its own deployment — the build and
-          # artifact were fine, only the publish handoff was slow.
-          timeout: 1800000
+        continue-on-error: true
+
+      - name: Verify the live site serves this build
+        env:
+          ASSET: ${{ needs.build.outputs.asset }}
+        run: |
+          url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/"
+          echo "Waiting for $url to serve $ASSET"
+          for i in $(seq 1 60); do
+            # Cache-bust so a CDN copy of the previous page can't false-pass.
+            if curl -sS "${url}?cb=${GITHUB_RUN_ID}-${i}" | grep -q "$ASSET"; then
+              echo "Confirmed live after ~$((i * 15))s."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::$ASSET never appeared at $url after 15 minutes."
+          exit 1
