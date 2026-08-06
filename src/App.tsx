@@ -1,9 +1,10 @@
-import { memo } from 'react'
-import type { AnchorHTMLAttributes } from 'react'
+import { isValidElement, memo } from 'react'
+import type { AnchorHTMLAttributes, HTMLAttributes } from 'react'
 import Markdown from 'react-markdown'
 import { ChainCanvas } from './components/ChainCanvas'
+import { CompareBars } from './components/CompareBars'
 import { MatrixPanel } from './components/MatrixPanel'
-import { ToolLink } from './components/ToolLink'
+import { ScenarioChip, ToolLink } from './components/ToolLink'
 import { RetentionChart } from './components/RetentionChart'
 import { Sidebar } from './components/Sidebar'
 import { SimulationPanel } from './components/SimulationPanel'
@@ -34,12 +35,19 @@ const SECTIONS = [
  *
  * The optional `preset` param loads that preset first, so prose like
  * "switch to the win-back preset" actually performs the switch.
+ *
+ * A second scheme, `#scenario:<id>`, renders as a before/after example chip:
+ * clicking loads that scenario (lib/scenarios.ts) into the tool and focuses
+ * the panel where the difference shows up.
  */
 function EssayLink({
   href,
   children,
   ...rest
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  if (href?.startsWith('#scenario:')) {
+    return <ScenarioChip id={href.slice('#scenario:'.length)}>{children}</ScenarioChip>
+  }
   if (href?.startsWith('#tool:')) {
     const [anchor, query] = href.slice('#tool:'.length).split('?')
     const preset = query ? new URLSearchParams(query).get('preset') : null
@@ -59,7 +67,26 @@ function EssayLink({
   )
 }
 
-const MD_COMPONENTS = { a: EssayLink }
+/**
+ * ```compare fences render as the inline before/after bar graphic instead of
+ * a code block — react-markdown wraps fenced code in pre > code, so the pre
+ * mapping is where the swap happens (see lib/compare.ts for the format).
+ */
+function EssayPre(props: HTMLAttributes<HTMLPreElement>) {
+  const child = props.children
+  if (isValidElement(child)) {
+    const { className, children } = child.props as {
+      className?: string
+      children?: unknown
+    }
+    if (typeof className === 'string' && className.includes('language-compare')) {
+      return <CompareBars source={String(children ?? '')} />
+    }
+  }
+  return <pre {...props} />
+}
+
+const MD_COMPONENTS = { a: EssayLink, pre: EssayPre }
 
 /**
  * The essay's static prose (header + sections). META and ESSAY_SECTIONS are

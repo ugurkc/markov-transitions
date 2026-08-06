@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Chain } from '../../lib/types'
 import type { Matrix } from '../../lib/linalg'
 import { forecastOscillates, longRunDistribution, nStepForecast } from '../../lib/analysis'
+import { getScenario } from '../../lib/scenarios'
+import { onScenarioRequest } from '../../lib/toolBridge'
 import { DistributionBars } from './DistributionBars'
 
 interface ForecastPanelProps {
@@ -28,6 +30,17 @@ const FOREVER = MAX_WEEKS + 1
 export function ForecastPanel({ chain, matrix }: ForecastPanelProps) {
   const [steps, setSteps] = useState(8)
   const forever = steps >= FOREVER
+
+  // Before/after chips that argue about the long run (see lib/scenarios.ts)
+  // jump the slider straight to infinity, so the reader lands on the number
+  // the prose is quoting instead of a week-8 snapshot.
+  useEffect(
+    () =>
+      onScenarioRequest((id) => {
+        if (getScenario(id)?.forecastToForever) setSteps(FOREVER)
+      }),
+    [],
+  )
 
   const startId = chain.inputStateId ?? chain.states[0]?.id
   const startName = chain.states.find((s) => s.id === startId)?.name

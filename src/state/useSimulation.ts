@@ -10,6 +10,8 @@ import {
   runSimulation,
 } from '../lib/simulation'
 import type { Arrival, Move, SimFrame } from '../lib/simulation'
+import { buildScenarioChain, getScenario } from '../lib/scenarios'
+import { onScenarioRequest } from '../lib/toolBridge'
 
 /** Milliseconds a single week takes to animate. */
 const SPEED_MS = { slow: 2200, normal: 1200, fast: 600 }
@@ -91,6 +93,33 @@ export function useSimulation(chain: Chain): Simulation {
   /** Playback head as a float: whole part = week, fraction = animation progress. */
   const [pos, setPos] = useState(0)
   const [playing, setPlaying] = useState(false)
+
+  // The essay's before/after chips can dictate the starting cohort (see
+  // lib/scenarios.ts). Every state of the scenario's chain is set explicitly
+  // — listed ones to their value, the rest to 0 — because a state left
+  // undefined here would fall back to the 100-player default below and
+  // quietly re-seed a population the scenario zeroed on purpose.
+  //
+  // A scenario with no cohort of its own clears the counts rather than
+  // leaving them alone: these chips are read as self-contained examples, so
+  // clicking one after a chip that *did* set a cohort must not silently
+  // inherit it and show the reader a histogram for the wrong population.
+  useEffect(
+    () =>
+      onScenarioRequest((id) => {
+        const scenario = getScenario(id)
+        if (!scenario) return
+        const counts = scenario.counts
+        setCountsById(
+          counts
+            ? Object.fromEntries(
+                buildScenarioChain(scenario).states.map((s) => [s.id, counts[s.id] ?? 0]),
+              )
+            : {},
+        )
+      }),
+    [],
+  )
 
   const initialCounts = useMemo(
     () =>

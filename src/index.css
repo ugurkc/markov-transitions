@@ -1253,3 +1253,83 @@ a {
     box-shadow: inset 0 0 0 3px var(--accent);
   }
 }
+
+/* --- Before/after example chips (the #scenario: markdown scheme) --- */
+
+/* Pill buttons in the prose that load a worked example into the tool.
+   Same family as the preset tabs so "clicking this changes the tool on the
+   right" reads instantly, but they live inline in a paragraph. */
+.scenario-chip {
+  appearance: none;
+  display: inline-block;
+  margin: 3px 8px 3px 0;
+  padding: 5px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.scenario-chip:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-faint), var(--shadow-sm);
+}
+
+/* --- Inline before/after bars (the ```compare markdown fence) --- */
+
+.compare-bars {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 7px 12px;
+  align-items: center;
+  margin: 14px 0 6px;
+  max-width: 470px;
+}
+
+/* Each row contributes two grid cells via display: contents, keeping the
+   label column exactly as wide as its longest label. */
+.compare-row {
+  display: contents;
+}
+
+.compare-label {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.compare-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Emphasis form: the bar the story is about wears the accent at full
+   strength; the rest are the same hue pulled back, so the mover pops
+   without a second color. Square at the baseline, rounded at the data end. */
+.compare-fill {
+  height: 12px;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+  opacity: 0.32;
+}
+
+.compare-fill.emphasis {
+  opacity: 1;
+}
+
+/* Values ride the bar tips in ink; the marks carry the color, never text. */
+.compare-value {
+  font-size: 12.5px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

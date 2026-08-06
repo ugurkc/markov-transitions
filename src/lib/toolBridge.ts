@@ -57,3 +57,22 @@ export function onPresetRequest(handler: (id: string) => void): () => void {
   window.addEventListener(LOAD_PRESET_EVENT, listener)
   return () => window.removeEventListener(LOAD_PRESET_EVENT, listener)
 }
+
+const LOAD_SCENARIO_EVENT = 'watershed:load-scenario'
+
+/**
+ * Ask the tool to load a before/after scenario (see lib/scenarios.ts). One
+ * event, several subscribers: the canvas swaps the chain, the simulation
+ * applies starting counts, the forecast panel jumps to infinity when asked --
+ * each component picks up only the part of the scenario it owns.
+ */
+export function requestScenario(id: string) {
+  window.dispatchEvent(new CustomEvent(LOAD_SCENARIO_EVENT, { detail: id }))
+}
+
+/** Subscribe to scenario requests; returns the unsubscribe. */
+export function onScenarioRequest(handler: (id: string) => void): () => void {
+  const listener = (e: Event) => handler((e as CustomEvent<string>).detail)
+  window.addEventListener(LOAD_SCENARIO_EVENT, listener)
+  return () => window.removeEventListener(LOAD_SCENARIO_EVENT, listener)
+}

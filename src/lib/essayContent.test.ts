@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { loadMeta, loadSections, parseFrontmatter, parseSection } from './essayContent'
 import { presets } from './presets'
+import { scenarios } from './scenarios'
+import { parseCompare } from './compare'
 
 describe('essay content', () => {
   const sections = loadSections()
@@ -110,6 +112,37 @@ describe('essay ↔ tool links', () => {
       const preset = new URLSearchParams(href.split('?')[1] ?? '').get('preset')
       if (preset) expect(presetIds, `order ${order}: ${href}`).toContain(preset)
     }
+  })
+
+  // The second scheme: [label](#scenario:<id>) renders as a before/after
+  // example chip. Ids must exist in lib/scenarios.ts, same rationale as
+  // anchors: a CMS typo should fail CI, not ship a chip that does nothing.
+  const scenarioLinks = loadSections().flatMap((s) =>
+    [...s.body.matchAll(/\]\(#scenario:([^)]*)\)/g)].map((m) => ({
+      order: s.order,
+      id: m[1],
+    })),
+  )
+  const scenarioIds = new Set(scenarios.map((s) => s.id))
+
+  it('every #scenario: chip names a real scenario', () => {
+    expect(scenarioLinks.length).toBeGreaterThan(0)
+    for (const { order, id } of scenarioLinks) {
+      expect(scenarioIds, `order ${order}: #scenario:${id}`).toContain(id)
+    }
+  })
+
+  it('every ```compare fence parses', () => {
+    let fenceCount = 0
+    for (const s of loadSections()) {
+      for (const m of s.body.matchAll(/```compare\n([\s\S]*?)```/g)) {
+        fenceCount++
+        // Throws (failing the test with the offending line) if malformed.
+        const spec = parseCompare(m[1])
+        expect(spec.rows.length, `order ${s.order}`).toBeGreaterThanOrEqual(2)
+      }
+    }
+    expect(fenceCount).toBeGreaterThan(0)
   })
 })
 

@@ -22,7 +22,8 @@ import type { Chain } from '../lib/types'
 import { validateChain } from '../lib/chain'
 import { presets } from '../lib/presets'
 import type { ChainAction } from '../state/chainReducer'
-import { onPresetRequest } from '../lib/toolBridge'
+import { onPresetRequest, onScenarioRequest } from '../lib/toolBridge'
+import { buildScenarioChain, getScenario } from '../lib/scenarios'
 import { flushCustomChain, loadSavedCustomChain } from '../state/useChain'
 import type { Simulation } from '../state/useSimulation'
 import type { Theme } from '../state/useTheme'
@@ -231,6 +232,24 @@ function ChainCanvasInner({ chain, dispatch, theme, sim }: ChainCanvasProps) {
   // The essay's ToolLinks can request a preset switch ("switch to the
   // win-back preset" in the prose actually switches it) — see toolBridge.ts.
   useEffect(() => onPresetRequest(loadPreset), [loadPreset])
+
+  // Same bridge, richer payload: the essay's before/after chips load a
+  // preset with the one edit the prose is discussing (see lib/scenarios.ts).
+  // Mirrors loadPreset exactly — flush, clear selection, swap, refit.
+  const loadScenario = useCallback(
+    (id: string) => {
+      const scenario = getScenario(id)
+      if (!scenario) return
+      flushCustomChain(chain)
+      setSelected(new Set())
+      measuredRef.current.clear()
+      dispatch({ type: 'loadChain', chain: buildScenarioChain(scenario) })
+      refit()
+    },
+    [dispatch, chain, refit],
+  )
+
+  useEffect(() => onScenarioRequest(loadScenario), [loadScenario])
 
   const startCustom = useCallback(() => {
     if (chain.id === 'custom') return

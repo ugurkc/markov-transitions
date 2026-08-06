@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { focusToolPanel } from '../lib/toolBridge'
+import { focusToolPanel, requestScenario } from '../lib/toolBridge'
+import { getScenario } from '../lib/scenarios'
 
 interface ToolLinkProps {
   /** Matches a `data-tool-anchor` attribute on a tool panel's root. */
@@ -41,6 +42,33 @@ export function ToolLink({ anchor, onBeforeFocus, children }: ToolLinkProps) {
         <circle cx="6" cy="6" r="1.5" />
       </svg>
       <span className="sr-only"> (show in the tool panel)</span>
+    </button>
+  )
+}
+
+/**
+ * A before/after example chip: clicking it loads the named scenario into the
+ * live tool (chain edit, starting cohort, forecast horizon — whatever the
+ * scenario declares; see lib/scenarios.ts) and then scrolls to and flashes
+ * the panel where the difference shows up. Rendered from the `#scenario:`
+ * markdown link scheme by EssayLink in App.tsx.
+ */
+export function ScenarioChip({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      className="scenario-chip"
+      onClick={() => {
+        const scenario = getScenario(id)
+        if (!scenario) return
+        requestScenario(id)
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => focusToolPanel(scenario.focusAnchor)),
+        )
+      }}
+    >
+      {children}
+      <span className="sr-only"> (load this example in the tool panel)</span>
     </button>
   )
 }
