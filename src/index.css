@@ -855,6 +855,54 @@ a {
   stroke-linecap: round;
 }
 
+/* The pinned "before" curve — drawn under the live line, dashed and muted
+   so the two are never mistaken for each other even before you read either. */
+.retention-line-baseline {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.retention-baseline-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.retention-baseline-controls button {
+  appearance: none;
+  padding: 5px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.retention-baseline-controls button:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-faint);
+}
+
+.retention-mean {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.retention-mean strong {
+  color: var(--ink);
+}
+
 .retention-dot {
   fill: var(--accent);
   stroke: var(--surface);

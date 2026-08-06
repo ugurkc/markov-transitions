@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { nStepForecast, absorptionAnalysis, steadyState, diagnostics } from './analysis'
+import { nStepForecast, absorptionAnalysis, steadyState, diagnostics, expectedTenure } from './analysis'
+import { funnelPreset, winBackPreset } from './presets'
 import type { Chain } from './types'
 
 function mkChain(names: string[], rows: Record<string, Record<string, number>>): Chain {
@@ -119,5 +120,52 @@ describe('diagnostics', () => {
   it('a state with no outbound to a different state has topOutbound null', () => {
     const cRow = diagnostics(c, null).find((row) => row.stateId === 'C')!
     expect(cRow.topOutbound).toBeNull()
+  })
+})
+
+describe('expectedTenure', () => {
+  // Pins the number the retention panel prints to the number the essay's
+  // prose quotes (absorbing-states.md: "about 6 weeks", "roughly 6.7 weeks")
+  // — regression coverage for a real bug where a simulation-derived version
+  // of this figure was right-censored and read ~3.2 weeks instead of 6.
+  it('matches the essay’s "about 6 weeks" claim for the funnel preset', () => {
+    expect(expectedTenure(funnelPreset)).toBeCloseTo(6, 10)
+  })
+
+  it('matches the essay’s "roughly 6.7 weeks" claim starting from Leveling or Endgame', () => {
+    const fromLeveling: Chain = { ...funnelPreset, inputStateId: 'leveling' }
+    const fromEndgame: Chain = { ...funnelPreset, inputStateId: 'endgame' }
+    expect(expectedTenure(fromLeveling)).toBeCloseTo(20 / 3, 10)
+    expect(expectedTenure(fromEndgame)).toBeCloseTo(20 / 3, 10)
+  })
+
+  it('is null when the output state is not absorbing (win-back loop)', () => {
+    expect(expectedTenure(winBackPreset)).toBeNull()
+  })
+
+  it('is null when the input or output state is not chosen', () => {
+    expect(expectedTenure({ ...funnelPreset, inputStateId: null })).toBeNull()
+    expect(expectedTenure({ ...funnelPreset, outputStateId: null })).toBeNull()
+  })
+
+  it('returns a real number for a fully connected chain', () => {
+    const c = mkChain(['A', 'B', 'Out'], { A: { B: 1 }, B: { Out: 1 }, Out: { Out: 1 } })
+    expect(expectedTenure({ ...c, inputStateId: 'A', outputStateId: 'Out' })).toBeCloseTo(2, 10)
+  })
+
+  it('is null rather than throwing when some state can never reach the output', () => {
+    const island = mkChain(['A', 'B', 'Isolated', 'Out'], {
+      A: { B: 1 },
+      B: { Out: 1 },
+      Isolated: { Isolated: 1 },
+      Out: { Out: 1 },
+    })
+    // Isolated can never reach Out, which makes the fundamental-matrix
+    // inversion singular for the whole chain — absorptionAnalysis throws
+    // for everyone once that happens, even for A's perfectly good path, so
+    // this returns null rather than letting that propagate.
+    expect(
+      expectedTenure({ ...island, inputStateId: 'A', outputStateId: 'Out' }),
+    ).toBeNull()
   })
 })

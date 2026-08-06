@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from 'react'
 import type { Chain } from '../lib/types'
+import { expectedTenure as computeExpectedTenure } from '../lib/analysis'
 import type { Simulation } from '../state/useSimulation'
 
 interface RetentionChartProps {
@@ -35,16 +37,49 @@ const BAR_GAP_FRACTION = 0.25
  * (`sim.periods`), even though the drawn data only reaches the current
  * week — a fixed axis reads far less jumpy than one that keeps resizing
  * itself as playback advances.
+ *
+ * "Pin as baseline" snapshots the current retention curve so the next run —
+ * after an edge is edited — draws alongside it as a ghost line, turning "did
+ * that change help" from a memorize-then-compare exercise into something you
+ * can just look at. The baseline only makes sense against the same weeks
+ * count and clears itself when the chain is swapped out from under it
+ * (a new preset, or "Build your own"); it survives edits to the current
+ * chain's own probabilities, since comparing before/after an edit is exactly
+ * the point.
+ *
+ * Below the histogram, the expected-tenure figure is deliberately *not*
+ * derived from the simulation. A "so far" average over one run's departures
+ * would be right-censored — players still active when the run ends are
+ * silently excluded, which biases it well below the truth even late in a
+ * run (verified: ~3.2 weeks observed vs. 6 analytic, averaged over 2000
+ * runs of the default funnel). Instead this is the same closed-form
+ * expected-steps-to-absorption the essay's prose quotes, so the number in
+ * the tool always matches the number on the page — and it needs no
+ * simulation to exist at all.
  */
 export function RetentionChart({ chain, sim }: RetentionChartProps) {
+  const [baseline, setBaseline] = useState<{ periods: number; series: number[] } | null>(null)
+
+  useEffect(() => {
+    setBaseline(null)
+  }, [chain.id])
+
+  const expectedTenure = useMemo(() => computeExpectedTenure(chain), [chain])
+
   if (chain.states.length === 0) return null
 
   const innerW = W - PAD_LEFT - PAD_RIGHT
   const x = (week: number) => PAD_LEFT + (week / Math.max(sim.periods, 1)) * innerW
 
+  const baselineActive = baseline !== null && baseline.periods === sim.periods
+
   const lineInnerH = LINE_H - LINE_PAD_TOP - LINE_PAD_BOTTOM
-  const yMax = Math.max(...sim.retentionSeries, 1)
+  const yMax = Math.max(...sim.retentionSeries, ...(baselineActive ? baseline.series : []), 1)
   const y = (v: number) => LINE_PAD_TOP + lineInnerH - (v / yMax) * lineInnerH
+
+  const baselinePath = baselineActive
+    ? baseline.series.map((v, week) => `${week === 0 ? 'M' : 'L'} ${x(week)} ${y(v)}`).join(' ')
+    : ''
 
   const revealed = sim.retentionSeries.slice(0, sim.period + 1)
   const points = revealed.map((v, week) => ({ x: x(week), y: y(v), week, v }))
@@ -72,6 +107,24 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
         {outputName ? <strong>{outputName}</strong> : 'the output state'} pull
         it down.
       </p>
+
+      {sim.hasEndpoints && sim.runnable && (
+        <div className="retention-baseline-controls">
+          <button
+            type="button"
+            onClick={() =>
+              setBaseline(
+                baseline ? null : { periods: sim.periods, series: sim.retentionSeries },
+              )
+            }
+          >
+            {baseline ? 'Clear baseline' : 'Pin as baseline'}
+          </button>
+          {baseline !== null && !baselineActive && (
+            <span className="hint">Baseline hidden &mdash; weeks count changed</span>
+          )}
+        </div>
+      )}
 
       {!sim.hasEndpoints ? (
         <p className="hint retention-empty">
@@ -116,6 +169,7 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
               week {sim.periods}
             </text>
             {areaPath && <path className="retention-area" d={areaPath} />}
+            {baselinePath && <path className="retention-line-baseline" d={baselinePath} />}
             {linePath && <path className="retention-line" d={linePath} />}
             {current && <circle className="retention-dot" cx={current.x} cy={current.y} r={3.5} />}
           </svg>
@@ -170,6 +224,14 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
               />
             ))}
           </svg>
+          {expectedTenure !== null && (
+            <p className="retention-mean">
+              Expected tenure from{' '}
+              <strong>{chain.states.find((s) => s.id === chain.inputStateId)?.name}</strong> to{' '}
+              <strong>{outputName}</strong>:{' '}
+              <strong>{expectedTenure.toFixed(1)} weeks</strong>
+            </p>
+          )}
         </>
       )}
     </div>

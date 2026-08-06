@@ -1,7 +1,7 @@
 import { vecMat, invert, identity, matMul } from './linalg'
 import type { Matrix, Vector } from './linalg'
 import type { Chain } from './types'
-import { buildMatrix } from './chain'
+import { absorbingStateIds, buildMatrix } from './chain'
 
 /** Distributions after 0..n steps, starting from `start`. */
 export function nStepForecast(p: Matrix, start: Vector, n: number): Vector[] {
@@ -57,6 +57,27 @@ export function absorptionAnalysis(p: Matrix, absorbingIdx: number[]): Absorptio
     expectedSteps[ti] = nMat[x].reduce((a, v) => a + v, 0)
   })
   return { absorptionProbs, expectedSteps }
+}
+
+/**
+ * Expected weeks from the chain's input state to its output state — the
+ * exact closed-form number, not a simulated average. Only defined when the
+ * output state is actually absorbing (a one-way door): "expected steps to
+ * absorption" isn't meaningful when players can leave and come back, and a
+ * custom chain can have a state that never reaches the output at all, in
+ * which case there's no single expected value either. Both cases return
+ * null rather than a misleading number.
+ */
+export function expectedTenure(chain: Chain): number | null {
+  const inputIdx = chain.states.findIndex((s) => s.id === chain.inputStateId)
+  const outputIdx = chain.states.findIndex((s) => s.id === chain.outputStateId)
+  if (inputIdx < 0 || outputIdx < 0) return null
+  if (!absorbingStateIds(chain).includes(chain.states[outputIdx].id)) return null
+  try {
+    return absorptionAnalysis(buildMatrix(chain), [outputIdx]).expectedSteps[inputIdx]
+  } catch {
+    return null
+  }
 }
 
 export interface SteadyStateResult {

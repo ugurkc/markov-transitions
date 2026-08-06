@@ -8,5 +8,4 @@ Ask how they know the thing they’re putting all their chips in will actually w
 
 So underneath whatever confidence the room demands, the honest answer is smaller than anyone says out loud: *we think this will help.* **We won’t know until we ship it and watch.**
 
-Main point of this essay isn't a denial of the fact that most things that are customer facing are best tested out in the real world. 
-What I want to get across is; when you have multiple options to sand limited capacity to test, thinking about the game as a system where people move between states of play will allow you to make healthy expectations about the paths ahead.
+The main point of this essay isn’t a denial of the fact that most things customer-facing are best tested in the real world. What I want to get across is this: when you have multiple options and limited capacity to test, thinking about the game as a system — people moving between states, not a list of features to ship — lets you make healthy bets about which path is actually worth the sprint.

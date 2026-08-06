@@ -8,6 +8,7 @@ import {
 } from './presets'
 import { validateChain, absorbingStateIds, closedClasses, buildMatrix } from './chain'
 import { absorptionAnalysis, steadyState } from './analysis'
+import type { Chain } from './types'
 
 /** Expected steps to absorption, keyed by state id. */
 function stepsToAbsorption(chain: typeof funnelPreset, absorbingId: string) {
@@ -15,6 +16,16 @@ function stepsToAbsorption(chain: typeof funnelPreset, absorbingId: string) {
   const idx = chain.states.findIndex((s) => s.id === absorbingId)
   const { expectedSteps } = absorptionAnalysis(p, [idx])
   return (id: string) => expectedSteps[chain.states.findIndex((s) => s.id === id)]
+}
+
+/** A copy of `chain` with `from`'s outgoing row replaced (must still sum to 1). */
+function withRow(chain: Chain, from: string, row: Record<string, number>): Chain {
+  return {
+    ...chain,
+    transitions: chain.transitions.map((t) =>
+      t.from === from && row[t.to] !== undefined ? { ...t, probability: row[t.to] } : t,
+    ),
+  }
 }
 
 describe('funnel preset (Tutorial/Leveling/Endgame/Churned, Churned absorbing)', () => {
@@ -45,6 +56,33 @@ describe('win-back preset (adds Returning, no absorbing states)', () => {
     const expected = [0, 21 / 128, 35 / 128, 60 / 128, 12 / 128]
     r.distribution.forEach((x, i) => expect(x).toBeCloseTo(expected[i], 6))
   })
+
+  // Pins the two-options worked example in steady-state.md's prose: a
+  // faster-onboarding fix that provably changes nothing, versus a win-back
+  // fix that moves Churned by ~10 points. If the preset's tuning ever
+  // changes, this is what tells you the essay's numbers went stale with it.
+  describe('worked example: two options, one sprint', () => {
+    const churnedPct = (chain: Chain) => {
+      const idx = chain.states.findIndex((s) => s.id === 'churned')
+      return steadyState(buildMatrix(chain)).distribution[idx] * 100
+    }
+    const baselineChurnedPct = churnedPct(winBackPreset)
+
+    it('option A (faster onboarding: Tutorial 40/40/20) leaves steady-state Churned unchanged', () => {
+      const optionA = withRow(winBackPreset, 'tutorial', {
+        tutorial: 0.4,
+        leveling: 0.4,
+        churned: 0.2,
+      })
+      expect(churnedPct(optionA)).toBeCloseTo(baselineChurnedPct, 2)
+    })
+
+    it('option B (more win-back: Churned 70/30) drops steady-state Churned by about 10 points', () => {
+      const optionB = withRow(winBackPreset, 'churned', { churned: 0.7, returning: 0.3 })
+      expect(baselineChurnedPct - churnedPct(optionB)).toBeCloseTo(9.8, 1)
+      expect(churnedPct(optionB)).toBeCloseTo(37.0, 1)
+    })
+  })
 })
 
 describe('ranked ladder preset (Bronze→Platinum, Inactive absorbing)', () => {
@@ -60,6 +98,21 @@ describe('ranked ladder preset (Bronze→Platinum, Inactive absorbing)', () => {
     expect(steps('bronze')).toBeLessThan(steps('silver'))
     expect(steps('silver')).toBeLessThan(steps('gold'))
     expect(steps('gold')).toBeLessThan(steps('platinum'))
+  })
+
+  // Pins the diminishing-returns figures the essay's prose quotes
+  // (try-it.md: "about 1.7 extra weeks", "0.6 weeks", "barely 0.2") — each
+  // rung buys less than the one before it, not just "more than before".
+  it('each rung up buys a shrinking amount of extra expected tenure', () => {
+    const steps = stepsToAbsorption(rankedPreset, 'inactive')
+    const bronzeToSilver = steps('silver') - steps('bronze')
+    const silverToGold = steps('gold') - steps('silver')
+    const goldToPlatinum = steps('platinum') - steps('gold')
+    expect(bronzeToSilver).toBeCloseTo(1.7, 1)
+    expect(silverToGold).toBeCloseTo(0.6, 1)
+    expect(goldToPlatinum).toBeCloseTo(0.2, 1)
+    expect(bronzeToSilver).toBeGreaterThan(silverToGold)
+    expect(silverToGold).toBeGreaterThan(goldToPlatinum)
   })
 })
 
