@@ -1,4 +1,4 @@
-import { isValidElement, memo } from 'react'
+import { isValidElement, memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { AnchorHTMLAttributes, HTMLAttributes } from 'react'
 import Markdown from 'react-markdown'
 import { ChainCanvas } from './components/ChainCanvas'
@@ -9,9 +9,19 @@ import { RetentionChart } from './components/RetentionChart'
 import { Sidebar } from './components/Sidebar'
 import { SimulationPanel } from './components/SimulationPanel'
 import { ThemeToggle } from './components/ThemeToggle'
-import { CalculatorsSection } from './components/panels/CalculatorsSection'
+import { ForecastPanel } from './components/panels/ForecastPanel'
+import { ValidationBanner } from './components/panels/ValidationBanner'
+import { buildMatrix, validateChain } from './lib/chain'
 import { loadMeta, loadSections } from './lib/essayContent'
-import { requestPreset } from './lib/toolBridge'
+import {
+  PANEL_LABELS,
+  PANEL_ORDER,
+  isPanelKey,
+  panelForSection,
+} from './lib/stagePanels'
+import type { PanelKey } from './lib/stagePanels'
+import { onPanelRequest, requestPreset } from './lib/toolBridge'
+import { useActiveSection } from './state/useActiveSection'
 import { useChain } from './state/useChain'
 import { useSimulation } from './state/useSimulation'
 import { useTheme } from './state/useTheme'
@@ -123,10 +133,42 @@ const ArticleBody = memo(function ArticleBody() {
   )
 })
 
+/** Section ids the stage tracks, in document order. Stable by module scope. */
+const TRACKED_SECTIONS = ['intro', ...ESSAY_SECTIONS.map((s) => s.id).filter(Boolean)] as string[]
+
 function App() {
   const { chain, dispatch } = useChain()
   const [theme, setTheme] = useTheme()
   const sim = useSimulation(chain)
+
+  const validation = useMemo(() => validateChain(chain), [chain])
+  const matrix = useMemo(() => buildMatrix(chain), [chain])
+
+  const activeSection = useActiveSection(TRACKED_SECTIONS)
+
+  // A prose link or a before/after chip can pin a panel that isn't the one
+  // this section would pick. That choice holds while the reader stays put and
+  // is dropped as soon as they scroll into a different section, so the stage
+  // goes back to following along rather than being stuck where a click left it.
+  const [override, setOverride] = useState<{ panel: PanelKey; section: string } | null>(null)
+  const sectionRef = useRef(activeSection)
+  sectionRef.current = activeSection
+
+  useEffect(
+    () =>
+      onPanelRequest((key) => {
+        if (isPanelKey(key)) setOverride({ panel: key, section: sectionRef.current })
+      }),
+    [],
+  )
+
+  const panel =
+    override && override.section === activeSection
+      ? override.panel
+      : panelForSection(activeSection)
+
+  const selectPanel = (key: PanelKey) => setOverride({ panel: key, section: activeSection })
+
   return (
     <div className="page">
       <ThemeToggle
@@ -144,19 +186,45 @@ function App() {
             </footer>
           </article>
 
-          {/* The graph is pinned; only the panels beneath it scroll. Focusing
-              a result — from a before/after chip or a prose link — must never
-              push the chain off screen, which is what a single scrolling
-              column did. */}
+          {/* A stage, not a pile: the graph is always on it, and one panel
+              below follows whatever section is being read. Every panel is
+              mounted so their state survives a swap; the inactive ones are
+              hidden by CSS, which also lets the narrow breakpoint show the
+              whole set stacked instead. */}
           <aside className="tool-sidebar">
             <ChainCanvas chain={chain} dispatch={dispatch} theme={theme} sim={sim} />
-            <div className="tool-detail-pane">
-              <MatrixPanel chain={chain} dispatch={dispatch} />
-              <div className="sim-layout">
+
+            <div className="stage-tabs" role="tablist" aria-label="Tool panels">
+              {PANEL_ORDER.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={panel === key}
+                  className={`stage-tab${panel === key ? ' active' : ''}`}
+                  onClick={() => selectPanel(key)}
+                >
+                  {PANEL_LABELS[key]}
+                </button>
+              ))}
+            </div>
+
+            <div className="tool-stage">
+              <ValidationBanner chain={chain} validation={validation} />
+              <div className="stage-panel" data-active={panel === 'matrix'}>
+                <MatrixPanel chain={chain} dispatch={dispatch} />
+              </div>
+              <div className="stage-panel" data-active={panel === 'simulate'}>
                 <SimulationPanel chain={chain} dispatch={dispatch} sim={sim} />
+              </div>
+              <div className="stage-panel" data-active={panel === 'retention'}>
                 <RetentionChart chain={chain} sim={sim} />
               </div>
-              <CalculatorsSection chain={chain} />
+              <div className="stage-panel" data-active={panel === 'forecast'}>
+                {validation.valid && chain.states.length > 0 && (
+                  <ForecastPanel chain={chain} matrix={matrix} />
+                )}
+              </div>
             </div>
           </aside>
         </div>

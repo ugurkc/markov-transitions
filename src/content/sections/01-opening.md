@@ -1,5 +1,6 @@
 ---
 order: 1
+id: opening
 ---
 
 Due to work, I consistently talk to a lot of people that build and manage games about where they are and where they want to go. In an industry driven by passion, watching them chase their ambitions with total conviction is inspiring to say the least. Without exception, everyone articulates *point A* and *point B* in meticulous detail, the rewards they reap if they get to B, the consequences they face if they stay at A, all clear, all well thought out. When the conversation shifts to how they plan on getting there, they dial it up to an eleven: the features they could build, the bugs they could fix, the options they think could cut the deal.

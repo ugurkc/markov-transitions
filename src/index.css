@@ -274,9 +274,10 @@ main {
   flex: 0 0 auto;
 }
 
-/* Everything else, in its own scroll region. min-height:0 is what lets a
-   flex child actually scroll instead of stretching its parent. */
-.tool-detail-pane {
+/* The stage: one panel at a time, taking whatever height the graph leaves.
+   min-height:0 is what lets a flex child actually scroll instead of
+   stretching its parent. */
+.tool-stage {
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
@@ -285,6 +286,44 @@ main {
   flex-direction: column;
   gap: 16px;
   padding-right: 4px;
+}
+
+/* Every panel stays mounted so a swap never resets a slider or a pinned
+   baseline; the ones not on stage are simply not displayed. */
+.stage-panel[data-active='false'] {
+  display: none;
+}
+
+.stage-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stage-tab {
+  appearance: none;
+  padding: 5px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.stage-tab:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.stage-tab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 /* Deliberately a higher breakpoint than the TOC sidebar's own (1099px): the
@@ -311,13 +350,21 @@ main {
     margin-top: 8px;
   }
 
-  /* Stacked single column: nothing is pinned, so the detail pane stops being
-     its own scroll region and just flows with the page. It has to drop its
-     flex sizing too -- a 0 flex-basis contributes nothing to an auto-height
-     parent, which collapses the whole tool to a few hundred pixels. */
-  .tool-detail-pane {
+  /* Stacked single column: nothing is pinned, so there is no stage to
+     manage. Show every panel at once and drop the tab strip -- and drop the
+     flex sizing too, since a 0 flex-basis contributes nothing to an
+     auto-height parent and collapses the tool to a few hundred pixels. */
+  .tool-stage {
     flex: none;
     overflow: visible;
+  }
+
+  .stage-panel[data-active='false'] {
+    display: block;
+  }
+
+  .stage-tabs {
+    display: none;
   }
 
   .canvas-wrapper {

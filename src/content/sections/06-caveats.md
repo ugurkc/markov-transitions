@@ -1,5 +1,6 @@
 ---
 order: 6
+id: caveats
 ---
 
 A few honest caveats before you go build your own. A Markov chain assumes the future only depends on where a player is *right now*: not how they got there, not how long they’ve been there, not what day of the week it is. Real players are messier than that: someone who’s been stuck in Tutorial for one week behaves differently than someone stuck there for eight. If that distinction matters for your game, you’ll eventually want richer models. But this one gets you shockingly far for how simple it is, and it’s the right place to start.

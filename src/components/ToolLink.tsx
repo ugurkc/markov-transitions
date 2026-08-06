@@ -26,9 +26,11 @@ export function ToolLink({ anchor, onBeforeFocus, children }: ToolLinkProps) {
       className="tool-link"
       onClick={() => {
         onBeforeFocus?.()
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => focusToolPanel(anchor)),
-        )
+        // Synchronous on purpose: focusToolPanel swaps the panel immediately
+        // and defers only the highlight. Deferring the swap itself behind
+        // animation frames meant it never happened at all when frames were
+        // throttled, so the click looked like it did nothing.
+        focusToolPanel(anchor)
       }}
     >
       {children}
@@ -62,9 +64,7 @@ export function ScenarioChip({ id, children }: { id: string; children: ReactNode
         const scenario = getScenario(id)
         if (!scenario) return
         requestScenario(id)
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => focusToolPanel(scenario.focusAnchor)),
-        )
+        focusToolPanel(scenario.focusAnchor)
       }}
     >
       {children}

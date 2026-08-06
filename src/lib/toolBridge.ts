@@ -23,25 +23,54 @@ const FLASH_MS = 1600
 // the ring reads cleanly, so only the canvas opts out.
 const NO_FLASH_ANCHORS = new Set(['canvas'])
 
+const SHOW_PANEL_EVENT = 'watershed:show-panel'
+
+/**
+ * Put a panel on the stage. The essay's stage shows one instrument at a time,
+ * picked by the section you're reading, so pointing at a panel means asking
+ * for it rather than scrolling to it.
+ */
+export function requestPanel(key: string) {
+  window.dispatchEvent(new CustomEvent(SHOW_PANEL_EVENT, { detail: key }))
+}
+
+/** Subscribe to panel requests; returns the unsubscribe. */
+export function onPanelRequest(handler: (key: string) => void): () => void {
+  const listener = (e: Event) => handler((e as CustomEvent<string>).detail)
+  window.addEventListener(SHOW_PANEL_EVENT, listener)
+  return () => window.removeEventListener(SHOW_PANEL_EVENT, listener)
+}
+
+/**
+ * Bring a panel to the reader's attention: swap it onto the stage, then pulse
+ * a highlight once it has rendered. Still scrolls as a fallback for layouts
+ * where the panels are stacked rather than staged (the narrow breakpoint, and
+ * the playground page), where the element may genuinely be off screen.
+ */
 export function focusToolPanel(anchor: string) {
-  const el = document.querySelector<HTMLElement>(
-    `[data-tool-anchor="${anchor}"]`,
+  requestPanel(anchor)
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(
+        `[data-tool-anchor="${anchor}"]`,
+      )
+      if (!el) return
+      const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches
+      el.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'nearest',
+      })
+      if (NO_FLASH_ANCHORS.has(anchor)) return
+      // Restarting the animation needs the class to actually leave the DOM
+      // for a frame, hence remove → reflow → re-add.
+      el.classList.remove(FLASH_CLASS)
+      void el.offsetWidth
+      el.classList.add(FLASH_CLASS)
+      window.setTimeout(() => el.classList.remove(FLASH_CLASS), FLASH_MS)
+    }),
   )
-  if (!el) return
-  const reduceMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)',
-  ).matches
-  el.scrollIntoView({
-    behavior: reduceMotion ? 'auto' : 'smooth',
-    block: 'nearest',
-  })
-  if (NO_FLASH_ANCHORS.has(anchor)) return
-  // Restarting the animation needs the class to actually leave the DOM for
-  // a frame, hence remove → reflow → re-add.
-  el.classList.remove(FLASH_CLASS)
-  void el.offsetWidth
-  el.classList.add(FLASH_CLASS)
-  window.setTimeout(() => el.classList.remove(FLASH_CLASS), FLASH_MS)
 }
 
 const LOAD_PRESET_EVENT = 'watershed:load-preset'
