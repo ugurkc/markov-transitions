@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Chain } from '../lib/types'
 import { expectedTenure as computeExpectedTenure } from '../lib/analysis'
-import { comparisonFamily, getScenario } from '../lib/scenarios'
+import { comparisonFamily } from '../lib/scenarios'
 import { onScenarioRequest } from '../lib/toolBridge'
 import type { Simulation } from '../state/useSimulation'
 
@@ -52,11 +52,18 @@ const BAR_GAP_FRACTION = 0.25
  * comparing before/after an edit is exactly the point — and it survives
  * stepping between the essay's before/after example chips too
  * (`comparisonFamily`), since a chip is just such an edit with a name on it.
- * The first chip in a family pins nothing to compare against; every chip
- * after that auto-pins whatever was on screen, so the reader sees the
- * difference the moment the next example loads rather than having to
- * remember to click "Pin as baseline" themselves. A baseline the reader set
- * on purpose is never silently overwritten by this.
+ *
+ * Clicking any example chip arms it as a pin-in-waiting: once *that*
+ * example's own run finishes calculating (`sim.period` reaches
+ * `sim.lastPeriod` — however it got there, autoplay or manual stepping),
+ * its curve is pinned as the baseline for the family, provided nothing is
+ * pinned yet. Waiting for the run to actually finish — rather than pinning
+ * the instant the chip is clicked — means the reader watches the example
+ * calculate before it locks in as the reference line the same way "Pin as
+ * baseline" itself does. The first example you let finish becomes the
+ * baseline; every example after that races against it automatically,
+ * without the reader ever having to click "Pin as baseline" by hand. A
+ * baseline the reader set on purpose is never silently overwritten by this.
  *
  * Below the histogram, the expected-tenure figure is deliberately *not*
  * derived from the simulation. A "so far" average over one run's departures
@@ -76,16 +83,18 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
     setBaseline(null)
   }, [family])
 
-  useEffect(
-    () =>
-      onScenarioRequest((id) => {
-        const target = getScenario(id)
-        if (!target || baseline || !sim.runnable) return
-        if (family !== target.presetId) return
-        setBaseline({ periods: sim.periods, series: sim.retentionSeries })
-      }),
-    [family, sim.runnable, sim.periods, sim.retentionSeries, baseline],
-  )
+  // Armed by clicking any example chip; cleared once acted on (or abandoned
+  // by clicking away before the run finishes — see the effect below).
+  const [pendingBaselineFor, setPendingBaselineFor] = useState<string | null>(null)
+
+  useEffect(() => onScenarioRequest(setPendingBaselineFor), [])
+
+  useEffect(() => {
+    if (pendingBaselineFor !== chain.id || baseline || !sim.runnable) return
+    if (sim.period < sim.lastPeriod) return
+    setBaseline({ periods: sim.periods, series: sim.retentionSeries })
+    setPendingBaselineFor(null)
+  }, [pendingBaselineFor, chain.id, baseline, sim.runnable, sim.period, sim.lastPeriod, sim.periods, sim.retentionSeries])
 
   const expectedTenure = useMemo(() => computeExpectedTenure(chain), [chain])
 
