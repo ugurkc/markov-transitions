@@ -37,6 +37,7 @@ export const SECTION_PANEL: Record<string, PanelKey> = {
   'states-and-transitions': 'matrix',
   'sample-questions': 'retention',
   'transition-matrix': 'matrix',
+  'real-world-modeling': 'retention',
   'try-it': 'simulate',
   caveats: 'forecast',
 }
