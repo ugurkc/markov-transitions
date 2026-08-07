@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useReducer } from 'react'
 import type { Chain } from '../lib/types'
 import { expectedTenure as computeExpectedTenure } from '../lib/analysis'
+import {
+  activeBaseline,
+  baselineReducer,
+  initialBaselineState,
+} from '../lib/retentionBaseline'
 import { comparisonFamily } from '../lib/scenarios'
 import { onScenarioRequest } from '../lib/toolBridge'
 import type { Simulation } from '../state/useSimulation'
@@ -76,25 +81,35 @@ const BAR_GAP_FRACTION = 0.25
  * simulation to exist at all.
  */
 export function RetentionChart({ chain, sim }: RetentionChartProps) {
-  const [baseline, setBaseline] = useState<{ periods: number; series: number[] } | null>(null)
+  // The pin/auto-pin rules live in lib/retentionBaseline.ts, where they can be
+  // tested against the sequences that actually happen (stale playback frames,
+  // chips clicked over each other, the reader overriding mid-run).
+  const [baselineState, dispatch] = useReducer(baselineReducer, initialBaselineState)
   const family = comparisonFamily(chain.id)
 
   useEffect(() => {
-    setBaseline(null)
+    dispatch({ type: 'family-changed' })
   }, [family])
 
-  // Armed by clicking any example chip; cleared once acted on (or abandoned
-  // by clicking away before the run finishes — see the effect below).
-  const [pendingBaselineFor, setPendingBaselineFor] = useState<string | null>(null)
+  useEffect(
+    () => onScenarioRequest((id) => dispatch({ type: 'scenario-requested', id })),
+    [],
+  )
 
-  useEffect(() => onScenarioRequest(setPendingBaselineFor), [])
-
+  const complete = sim.lastPeriod > 0 && sim.period >= sim.lastPeriod
   useEffect(() => {
-    if (pendingBaselineFor !== chain.id || baseline || !sim.runnable) return
-    if (sim.period < sim.lastPeriod) return
-    setBaseline({ periods: sim.periods, series: sim.retentionSeries })
-    setPendingBaselineFor(null)
-  }, [pendingBaselineFor, chain.id, baseline, sim.runnable, sim.period, sim.lastPeriod, sim.periods, sim.retentionSeries])
+    if (!sim.runnable) return
+    dispatch({
+      type: 'sim',
+      chainId: chain.id,
+      playing: sim.playing,
+      complete,
+      periods: sim.periods,
+      series: sim.retentionSeries,
+    })
+  }, [chain.id, sim.runnable, sim.playing, complete, sim.periods, sim.retentionSeries])
+
+  const baseline = baselineState.baseline
 
   const expectedTenure = useMemo(() => computeExpectedTenure(chain), [chain])
 
@@ -103,16 +118,16 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
   const innerW = W - PAD_LEFT - PAD_RIGHT
   const x = (week: number) => PAD_LEFT + (week / Math.max(sim.periods, 1)) * innerW
 
-  const baselineActive = baseline !== null && baseline.periods === sim.periods
+  const shownBaseline = activeBaseline(baselineState, sim.periods)
 
   const lineInnerH = LINE_H - LINE_PAD_TOP - LINE_PAD_BOTTOM
-  const yMax = Math.max(...sim.retentionSeries, ...(baselineActive ? baseline.series : []), 1)
+  const yMax = Math.max(...sim.retentionSeries, ...(shownBaseline?.series ?? []), 1)
   const y = (v: number) => LINE_PAD_TOP + lineInnerH - (v / yMax) * lineInnerH
 
   // Revealed by week, same as the live line below -- so a pinned baseline
   // animates in alongside the current run instead of snapping to full length
   // the instant it's pinned.
-  const revealedBaseline = baselineActive ? baseline.series.slice(0, sim.period + 1) : []
+  const revealedBaseline = shownBaseline ? shownBaseline.series.slice(0, sim.period + 1) : []
   const baselinePath =
     revealedBaseline.length > 0
       ? revealedBaseline.map((v, week) => `${week === 0 ? 'M' : 'L'} ${x(week)} ${y(v)}`).join(' ')
@@ -150,14 +165,16 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
           <button
             type="button"
             onClick={() =>
-              setBaseline(
-                baseline ? null : { periods: sim.periods, series: sim.retentionSeries },
-              )
+              dispatch({
+                type: 'toggle',
+                periods: sim.periods,
+                series: sim.retentionSeries,
+              })
             }
           >
             {baseline ? 'Clear baseline' : 'Pin as baseline'}
           </button>
-          {baseline !== null && !baselineActive && (
+          {baseline !== null && shownBaseline === null && (
             <span className="hint">Baseline hidden: weeks count changed</span>
           )}
         </div>
