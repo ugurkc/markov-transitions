@@ -94,6 +94,14 @@ export function useSimulation(chain: Chain): Simulation {
   const [pos, setPos] = useState(0)
   const [playing, setPlaying] = useState(false)
 
+  // Set by play() just before it draws a new seed, so the rewind effect
+  // below knows to keep playing through its own reset instead of pausing
+  // the run it was asked to start.
+  const resumeAfterResetRef = useRef(false)
+  // Guards against React dev-mode's double effect invocation re-applying
+  // (and thereby clobbering) resumeAfterResetRef for the same signature.
+  const appliedSignatureRef = useRef<string | null>(null)
+
   // The essay's before/after chips can dictate the starting cohort (see
   // lib/scenarios.ts). Every state of the scenario's chain is set explicitly
   // — listed ones to their value, the rest to 0 — because a state left
@@ -117,6 +125,12 @@ export function useSimulation(chain: Chain): Simulation {
               )
             : {},
         )
+        // Run the example immediately at fast speed rather than leaving the
+        // reader to notice and click Play: the whole point of a chip is to
+        // show the difference, not to hand back a static starting frame.
+        setSpeed('fast')
+        setSeed(randomSeed())
+        resumeAfterResetRef.current = true
       }),
     [],
   )
@@ -193,14 +207,6 @@ export function useSimulation(chain: Chain): Simulation {
       seed,
     ],
   )
-
-  // Set by play() just before it draws a new seed, so the rewind effect
-  // below knows to keep playing through its own reset instead of pausing
-  // the run it was asked to start.
-  const resumeAfterResetRef = useRef(false)
-  // Guards against React dev-mode's double effect invocation re-applying
-  // (and thereby clobbering) resumeAfterResetRef for the same signature.
-  const appliedSignatureRef = useRef<string | null>(null)
 
   // Rewind whenever the run itself changes — a half-played animation of a
   // chain that no longer exists would be misleading.
