@@ -26,7 +26,7 @@ import { useChain } from './state/useChain'
 import { useSimulation } from './state/useSimulation'
 import { useTheme } from './state/useTheme'
 
-const REPO_URL = 'https://github.com/ugurkc/watershed'
+const REPO_URL = 'https://github.com/ugurkc/riverbed'
 
 const META = loadMeta()
 const ESSAY_SECTIONS = loadSections()

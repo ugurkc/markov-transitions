@@ -7,7 +7,7 @@
 
 A personal space at `ugurkc.github.io`: the root URL shows a main page with a bio and a
 list of publishings. Each publishing links to an interactive essay deployed from its own
-repo under its own path (e.g. `ugurkc.github.io/watershed/`). The publishings list must
+repo under its own path (e.g. `ugurkc.github.io/riverbed/`). The publishings list must
 be easily amendable — adding a publishing should not require touching code.
 
 ## Architecture: multi-repo, native GitHub Pages paths
@@ -19,7 +19,7 @@ GitHub Pages natively provides the desired URL structure. A repo named
 | Repo | URL | Role |
 |---|---|---|
 | `ugurkc/ugurkc.github.io` (new) | `ugurkc.github.io/` | Astro hub: bio + publishings list |
-| `ugurkc/watershed` (unchanged) | `ugurkc.github.io/watershed/` | Interactive essay, already deployed with `base: '/watershed/'` |
+| `ugurkc/riverbed` (unchanged) | `ugurkc.github.io/riverbed/` | Interactive essay, already deployed with `base: '/riverbed/'` |
 | future `ugurkc/<slug>` | `ugurkc.github.io/<slug>/` | Future essays, one repo each |
 
 ## The hub site

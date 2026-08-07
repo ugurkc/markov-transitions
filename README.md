@@ -25,7 +25,7 @@ for:
   an absorbing state this trends toward 100% there, showing that everyone
   gets there eventually
 
-**Live site:** https://ugurkc.github.io/watershed/
+**Live site:** https://ugurkc.github.io/riverbed/
 
 ## Local development
 
@@ -40,7 +40,7 @@ npm run lint     # run oxlint
 ## Editing the essay text
 
 The essay prose is editable in the browser at
-**<https://ugurkc.github.io/watershed/admin/>** (Sveltia CMS, vendored in
+**<https://ugurkc.github.io/riverbed/admin/>** (Sveltia CMS, vendored in
 `public/admin/`). Sign-in uses the same GitHub fine-grained access token as
 the hub site — setup steps in the
 [hub README](https://github.com/ugurkc/ugurkc.github.io#editing-content-no-code).

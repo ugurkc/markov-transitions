@@ -42,7 +42,7 @@ describe('admin config', () => {
   it('targets this repo on main', () => {
     expect(config.backend).toEqual({
       name: 'github',
-      repo: 'ugurkc/watershed',
+      repo: 'ugurkc/riverbed',
       branch: 'main',
       // token-only: the OAuth button needs an auth gateway we don't run
       auth_methods: ['token'],
@@ -102,9 +102,9 @@ describe('admin config', () => {
   })
 
   it('media public_folder accounts for the project-page base path', () => {
-    // This site deploys under ugurkc.github.io/watershed/, so a bare
-    // /uploads public path would 404 — media URLs must be /watershed/…
-    expect(config.public_folder?.startsWith('/watershed/')).toBe(true)
+    // This site deploys under ugurkc.github.io/riverbed/, so a bare
+    // /uploads public path would 404 — media URLs must be /riverbed/…
+    expect(config.public_folder?.startsWith('/riverbed/')).toBe(true)
   })
 
   it('copies the CMS bundle from the pinned dependency at build time', () => {

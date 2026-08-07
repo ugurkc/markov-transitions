@@ -2,15 +2,15 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** A hub site at `ugurkc.github.io` with a bio and a YAML-driven publishings list, where each publishing links to an essay deployed from its own repo (e.g. `/watershed/`).
+**Goal:** A hub site at `ugurkc.github.io` with a bio and a YAML-driven publishings list, where each publishing links to an essay deployed from its own repo (e.g. `/riverbed/`).
 
-**Architecture:** Multi-repo with native GitHub Pages paths — a new `ugurkc/ugurkc.github.io` repo (Astro, one index page, publishings from `src/data/publishings.yaml`) serves the root; existing project repos like `ugurkc/watershed` keep serving under `/<repo-name>/` with their own Actions deploys. Design doc: `docs/plans/2026-08-03-personal-site-hub-design.md`.
+**Architecture:** Multi-repo with native GitHub Pages paths — a new `ugurkc/ugurkc.github.io` repo (Astro, one index page, publishings from `src/data/publishings.yaml`) serves the root; existing project repos like `ugurkc/riverbed` keep serving under `/<repo-name>/` with their own Actions deploys. Design doc: `docs/plans/2026-08-03-personal-site-hub-design.md`.
 
 **Tech Stack:** Astro 7 (bumped from 5 during Task 1 code review — security advisories are only patched in 7.1.6+), `@rollup/plugin-yaml` (YAML import), Vitest (data-file validation), GitHub Actions Pages deploy (same shape as Watershed's `deploy.yml`).
 
 **Repos touched:**
 - NEW: `/Users/ugurkoc/repos/ugurkc.github.io` → `github.com/ugurkc/ugurkc.github.io`
-- EXISTING: `/Users/ugurkoc/repos/markov-transitions` (= `github.com/ugurkc/watershed`) — Task 6 only
+- EXISTING: `/Users/ugurkoc/repos/markov-transitions` (= `github.com/ugurkc/riverbed`) — Task 6 only
 
 **Hard rules:**
 - NEVER add `Co-Authored-By` / "Generated with Claude Code" trailers to commits (user rule).
@@ -190,7 +190,7 @@ Expected: FAIL — cannot resolve `./publishings.yaml`.
     An interactive essay on modeling player lifecycles as Markov chains —
     onboarding, engagement, churn, and win-back, with a live simulator.
   date: "2026-08-03"
-  url: /watershed/
+  url: /riverbed/
 ```
 
 **Step 5: Run test to verify it passes**
@@ -392,12 +392,12 @@ const formatDate = (iso: string) =>
 
 **Step 2: Build and verify output**
 
-Run: `npm run build && grep -o 'href="/watershed/"' dist/index.html && grep -c 'Watershed' dist/index.html`
-Expected: build succeeds; grep prints `href="/watershed/"` and a count ≥ 1.
+Run: `npm run build && grep -o 'href="/riverbed/"' dist/index.html && grep -c 'Watershed' dist/index.html`
+Expected: build succeeds; grep prints `href="/riverbed/"` and a count ≥ 1.
 
 **Step 3: Visual check (optional but recommended)**
 
-Start the dev server and view `http://localhost:4321/` in the browser preview: bio on top, one publishing card linking to `/watershed/`. Check dark mode too. (When executing with Claude tools: add a `.claude/launch.json` entry rather than running the server via Bash.)
+Start the dev server and view `http://localhost:4321/` in the browser preview: bio on top, one publishing card linking to `/riverbed/`. Check dark mode too. (When executing with Claude tools: add a `.claude/launch.json` entry rather than running the server via Bash.)
 
 **Step 4: Commit**
 
@@ -489,7 +489,7 @@ Each essay lives in its own repo and appears at
 1. Create the repo `ugurkc/<slug>`. Set the build's base path to `/<slug>/`
    (Vite: `base: '/<slug>/'` in `vite.config.ts`).
 2. Copy `.github/workflows/deploy.yml` from the
-   [watershed repo](https://github.com/ugurkc/watershed) into the new repo.
+   [watershed repo](https://github.com/ugurkc/riverbed) into the new repo.
 3. Enable Pages for the repo with source "GitHub Actions":
    `gh api repos/ugurkc/<slug>/pages -X POST -f build_type=workflow`
 4. Push to `main` — the essay goes live at `ugurkc.github.io/<slug>/`.
@@ -543,11 +543,11 @@ gh run rerun --repo ugurkc/ugurkc.github.io --failed $(gh run list --repo ugurkc
 **Step 4: Verify both URLs live**
 
 ```bash
-curl -sL https://ugurkc.github.io/ | grep -o 'href="/watershed/"'
-curl -s -o /dev/null -w "%{http_code}\n" https://ugurkc.github.io/watershed/
+curl -sL https://ugurkc.github.io/ | grep -o 'href="/riverbed/"'
+curl -s -o /dev/null -w "%{http_code}\n" https://ugurkc.github.io/riverbed/
 ```
 
-Expected: first prints `href="/watershed/"`; second prints `200`. CDN can lag ~1–2 minutes after the first deploy; retry before diagnosing.
+Expected: first prints `href="/riverbed/"`; second prints `200`. CDN can lag ~1–2 minutes after the first deploy; retry before diagnosing.
 
 ---
 
@@ -608,7 +608,7 @@ git push
 **Step 6: Verify live** — after the watershed Action finishes (~1–2 min):
 
 ```bash
-curl -sL https://ugurkc.github.io/watershed/ | grep -o 'ugurkc.github.io'
+curl -sL https://ugurkc.github.io/riverbed/ | grep -o 'ugurkc.github.io'
 ```
 
 Expected: at least one match (the link is in the JS bundle or HTML; if not in HTML, check the deployed page in a browser instead — the app renders client-side, so prefer the browser check).
@@ -617,6 +617,6 @@ Expected: at least one match (the link is in the JS bundle or HTML; if not in HT
 
 ### Done criteria
 
-- `https://ugurkc.github.io/` shows bio + a Watershed card linking to `/watershed/`.
-- `https://ugurkc.github.io/watershed/` still works and now links back home.
+- `https://ugurkc.github.io/` shows bio + a Watershed card linking to `/riverbed/`.
+- `https://ugurkc.github.io/riverbed/` still works and now links back home.
 - Adding a future publishing = one YAML entry in the hub + push (recipe in hub README).

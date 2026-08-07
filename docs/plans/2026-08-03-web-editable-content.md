@@ -10,7 +10,7 @@
 
 **Repos:**
 - HUB = `/Users/ugurkoc/repos/ugurkc.github.io` (github.com/ugurkc/ugurkc.github.io)
-- WS = `/Users/ugurkoc/repos/markov-transitions` (github.com/ugurkc/watershed)
+- WS = `/Users/ugurkoc/repos/markov-transitions` (github.com/ugurkc/riverbed)
 
 **Hard rules:**
 - NEVER add `Co-Authored-By` / "Generated with Claude Code" trailers.
@@ -45,7 +45,7 @@ const post = (id: string, date: string, draft = false) => ({
 describe('mergeFeed', () => {
   it('merges publishings and posts sorted by date descending', () => {
     const items = mergeFeed(
-      [pub('Watershed', '2026-08-03', '/watershed/')],
+      [pub('Watershed', '2026-08-03', '/riverbed/')],
       [post('newer', '2026-09-01'), post('older', '2026-01-01')],
     )
     expect(items.map((i) => i.title)).toEqual(['newer', 'Watershed', 'older'])
@@ -62,8 +62,8 @@ describe('mergeFeed', () => {
   })
 
   it('keeps publishings intact', () => {
-    const items = mergeFeed([pub('W', '2026-08-03', '/watershed/')], [])
-    expect(items[0]).toMatchObject({ title: 'W', url: '/watershed/' })
+    const items = mergeFeed([pub('W', '2026-08-03', '/riverbed/')], [])
+    expect(items[0]).toMatchObject({ title: 'W', url: '/riverbed/' })
   })
 })
 ```
@@ -231,7 +231,7 @@ Replace the old inline `.slice().sort(...)` with `mergeFeed` (the util owns sort
 **Step 4: Verify** — `npm run test && npm run build`, then:
 - `test -f dist/blog/hello-world/index.html && echo page-exists` → `page-exists` (draft page renders)
 - `grep -c 'hello-world' dist/index.html` → `0` (draft not listed on homepage)
-- `grep -o 'href="/watershed/"' dist/index.html` → still present
+- `grep -o 'href="/riverbed/"' dist/index.html` → still present
 
 **Step 5: Commit** — `git add src/styles/base.css src/pages/blog src/pages/index.astro && git commit -m "Add blog pages and merge posts into the homepage feed"`
 
@@ -343,7 +343,7 @@ CAUTION — root-list YAML: `publishings.yaml` is a top-level LIST, and Decap-st
 ```
 User-agent: *
 Disallow: /admin/
-Disallow: /watershed/admin/
+Disallow: /riverbed/admin/
 ```
 
 **Step 5: Write `src/lib/adminConfig.test.ts`** — guards config↔repo drift:
@@ -393,7 +393,7 @@ describe('admin config', () => {
 - `curl -s https://ugurkc.github.io/robots.txt` → the disallow lines
 - `curl -s -o /dev/null -w "%{http_code}\n" https://ugurkc.github.io/blog/hello-world/` → 200
 - `curl -s https://ugurkc.github.io/ | grep -c hello-world` → 0
-- `curl -s https://ugurkc.github.io/ | grep -o 'href="/watershed/"'` → present
+- `curl -s https://ugurkc.github.io/ | grep -o 'href="/riverbed/"'` → present
 
 (CDN may lag 1–2 min; retry.) The coordinator does the browser check of `/admin/` (login screen renders) — do not attempt sign-in.
 
@@ -671,18 +671,18 @@ Do NOT push yet (Task 8 pushes once, after the admin lands — one deploy, one l
 **Files (WS):**
 - Create: `public/admin/index.html`, `public/admin/config.yml`, `public/admin/sveltia-cms.js` (vendored), `src/lib/adminConfig.test.ts`
 
-**Step 1: Vendor Sveltia** exactly as in Task 4 (`npm install -D @sveltia/cms`, copy dist file). `public/admin/index.html` identical to the hub's (Vite copies `public/` into `dist/`, served at `/watershed/admin/`).
+**Step 1: Vendor Sveltia** exactly as in Task 4 (`npm install -D @sveltia/cms`, copy dist file). `public/admin/index.html` identical to the hub's (Vite copies `public/` into `dist/`, served at `/riverbed/admin/`).
 
 **Step 2: Write `public/admin/config.yml`**
 
 ```yaml
 backend:
   name: github
-  repo: ugurkc/watershed
+  repo: ugurkc/riverbed
   branch: main
 
 media_folder: public/uploads
-public_folder: /watershed/uploads
+public_folder: /riverbed/uploads
 
 collections:
   - name: sections
@@ -711,7 +711,7 @@ collections:
           - { name: body, label: Subtitle, widget: markdown }
 ```
 
-**Step 3: Write `src/lib/adminConfig.test.ts`** — same three guards as the hub version (backend repo `ugurkc/watershed`, paths exist, sections field names `[order, id, label, heading, body]`). WS has no vite yaml import plugin: `npm install -D yaml`, import the config with `?raw` and `parse()` from `yaml`.
+**Step 3: Write `src/lib/adminConfig.test.ts`** — same three guards as the hub version (backend repo `ugurkc/riverbed`, paths exist, sections field names `[order, id, label, heading, body]`). WS has no vite yaml import plugin: `npm install -D yaml`, import the config with `?raw` and `parse()` from `yaml`.
 
 **Step 4:** `npm run test` (all green) and `npm run build`; confirm `dist/admin/index.html` and `dist/admin/config.yml` exist.
 
@@ -720,7 +720,7 @@ collections:
 **Step 6: Watch the run** (same pattern as before) — success expected; the suite gates the whole refactor in CI.
 
 **Step 7: Live verify:**
-- `curl -s -o /dev/null -w "%{http_code}\n" https://ugurkc.github.io/watershed/admin/` → 200
+- `curl -s -o /dev/null -w "%{http_code}\n" https://ugurkc.github.io/riverbed/admin/` → 200
 - Coordinator does the decisive check in the browser: extract the live article `innerText` (captured BEFORE this deploy as the baseline) vs after — must be identical; anchors `#transition-matrix` etc. scroll correctly; both themes render; sidebar labels unchanged.
 
 ---
@@ -731,14 +731,14 @@ collections:
 - Modify: HUB `README.md`, WS `README.md`
 
 **HUB README** — add an "Editing content (no code)" section:
-- Admin URLs: `https://ugurkc.github.io/admin/` (blog, publishings, bio) and `https://ugurkc.github.io/watershed/admin/` (essay prose).
+- Admin URLs: `https://ugurkc.github.io/admin/` (blog, publishings, bio) and `https://ugurkc.github.io/riverbed/admin/` (essay prose).
 - Sign-in: create a GitHub **fine-grained PAT** — Settings → Developer settings → Personal access tokens → Fine-grained; Repository access: only `ugurkc.github.io` and `watershed`; Permissions: **Contents: Read and write** (Metadata: read is added automatically). Paste it into Sveltia's sign-in once per browser. Never share this token; it can push to these two repos.
 - Publishing model: Save = commit to main → tests run → live in ~1 min; a failing edit never deploys (check the repo's Actions tab if an edit doesn't appear).
 - Blog: `draft: true` = unlisted preview at its URL; flip to false to list it.
 - Maintenance: to update the CMS, `npm update @sveltia/cms` and re-copy `dist/sveltia-cms.js` into `public/admin/` in both repos.
 - Update the new-essay recipe: optional step 6 — "for web-editable prose, copy the `src/content/` + `public/admin/` pattern from watershed (set `repo:` in config.yml to the new repo)".
 
-**WS README** — short "Editing the essay text" section pointing at `/watershed/admin/`, the section/meta model, and the ordering rule (`order` field drives sequence; `label` present = shown in sidebar; `id` = anchor).
+**WS README** — short "Editing the essay text" section pointing at `/riverbed/admin/`, the section/meta model, and the ordering rule (`order` field drives sequence; `label` present = shown in sidebar; `id` = anchor).
 
 **Commit both** (each repo: `git add README.md && git commit -m "Document the content editing workflow" && git push`). Watch both runs green.
 
@@ -747,5 +747,5 @@ collections:
 ### Done criteria
 
 - Hub: `/admin/` edits blog/publishings/bio; posts render at `/blog/<slug>/`; drafts unlisted; homepage merges feeds; all guarded by CI tests.
-- Watershed: essay prose lives in `src/content/`, rendered identically (verbatim + live-text gates passed), sidebar derived, `/watershed/admin/` edits it; 128 pre-existing tests still green.
+- Watershed: essay prose lives in `src/content/`, rendered identically (verbatim + live-text gates passed), sidebar derived, `/riverbed/admin/` edits it; 128 pre-existing tests still green.
 - Docs tell the owner exactly how to sign in and publish; token handling stays entirely with the owner.

@@ -21,7 +21,7 @@ on the last good version.
 | Surface | Edits |
 |---|---|
 | `ugurkc.github.io/admin/` | blog posts, publishings list, bio |
-| `ugurkc.github.io/watershed/admin/` | essay prose sections + header text |
+| `ugurkc.github.io/riverbed/admin/` | essay prose sections + header text |
 
 CMS configs point exclusively at content paths — the CMS has no UI path to code files.
 
@@ -56,7 +56,7 @@ entities); all interactives live in the separate `<aside>`. No MDX needed.
   cannot desync navigation.
 - **Tests (CI-gated like the hub's YAML tests):** unique valid ids, unique orders,
   label⇒id, non-empty bodies, meta shape.
-- **Admin:** `public/admin/` (served at `/watershed/admin/`), collections: sections
+- **Admin:** `public/admin/` (served at `/riverbed/admin/`), collections: sections
   (folder, sorted by order), meta (file).
 
 ## Not breaking the essay — hard gates

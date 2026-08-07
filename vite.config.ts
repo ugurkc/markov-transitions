@@ -7,7 +7,7 @@ const root = import.meta.dirname
 
 export default defineConfig({
   plugins: [react()],
-  base: '/watershed/',
+  base: '/riverbed/',
   build: {
     rollupOptions: {
       // Two pages: the essay at the root and the standalone simulator under
