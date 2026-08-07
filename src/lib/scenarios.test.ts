@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildScenarioChain, getScenario, scenarios } from './scenarios'
+import { buildScenarioChain, comparisonFamily, getScenario, scenarios } from './scenarios'
 import { presets } from './presets'
 import { validateChain } from './chain'
 import { buildMatrix } from './chain'
@@ -59,6 +59,23 @@ describe('scenarios are structurally sound', () => {
       expect(s.counts[chain.inputStateId!] ?? 0, `${s.id}: none in input state`)
         .toBeGreaterThan(0)
     }
+  })
+
+  it('sibling scenarios share a comparison family, strangers do not', () => {
+    for (const s of scenarios) expect(comparisonFamily(s.id), s.id).toBe(s.presetId)
+    // Two scenarios pointed at different presets must never collide.
+    const families = new Map(scenarios.map((s) => [s.presetId, s.id]))
+    for (const [presetId, sampleId] of families) {
+      for (const other of scenarios) {
+        if (other.presetId === presetId) continue
+        expect(comparisonFamily(sampleId)).not.toBe(comparisonFamily(other.id))
+      }
+    }
+  })
+
+  it('a non-scenario id is its own family (presets, "custom")', () => {
+    for (const p of presets) expect(comparisonFamily(p.id)).toBe(p.id)
+    expect(comparisonFamily('custom')).toBe('custom')
   })
 
   it('focus anchors are declared by a component', () => {

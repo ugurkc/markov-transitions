@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Chain } from '../lib/types'
 import { expectedTenure as computeExpectedTenure } from '../lib/analysis'
+import { comparisonFamily, getScenario } from '../lib/scenarios'
+import { onScenarioRequest } from '../lib/toolBridge'
 import type { Simulation } from '../state/useSimulation'
 
 interface RetentionChartProps {
@@ -39,13 +41,22 @@ const BAR_GAP_FRACTION = 0.25
  * itself as playback advances.
  *
  * "Pin as baseline" snapshots the current retention curve so the next run —
- * after an edge is edited — draws alongside it as a ghost line, turning "did
- * that change help" from a memorize-then-compare exercise into something you
- * can just look at. The baseline only makes sense against the same weeks
- * count and clears itself when the chain is swapped out from under it
- * (a new preset, or "Build your own"); it survives edits to the current
- * chain's own probabilities, since comparing before/after an edit is exactly
- * the point.
+ * after an edge is edited — draws alongside it as a ghost line, revealing in
+ * step with the live line rather than snapping in at full length, so it
+ * reads as a second simulation racing the first rather than a fact pasted
+ * onto the chart. This turns "did that change help" from a
+ * memorize-then-compare exercise into something you can just look at. The
+ * baseline only makes sense against the same weeks count and clears itself
+ * when the chain is swapped out from under it (a new preset, or "Build your
+ * own"); it survives edits to the current chain's own probabilities, since
+ * comparing before/after an edit is exactly the point — and it survives
+ * stepping between the essay's before/after example chips too
+ * (`comparisonFamily`), since a chip is just such an edit with a name on it.
+ * The first chip in a family pins nothing to compare against; every chip
+ * after that auto-pins whatever was on screen, so the reader sees the
+ * difference the moment the next example loads rather than having to
+ * remember to click "Pin as baseline" themselves. A baseline the reader set
+ * on purpose is never silently overwritten by this.
  *
  * Below the histogram, the expected-tenure figure is deliberately *not*
  * derived from the simulation. A "so far" average over one run's departures
@@ -59,10 +70,22 @@ const BAR_GAP_FRACTION = 0.25
  */
 export function RetentionChart({ chain, sim }: RetentionChartProps) {
   const [baseline, setBaseline] = useState<{ periods: number; series: number[] } | null>(null)
+  const family = comparisonFamily(chain.id)
 
   useEffect(() => {
     setBaseline(null)
-  }, [chain.id])
+  }, [family])
+
+  useEffect(
+    () =>
+      onScenarioRequest((id) => {
+        const target = getScenario(id)
+        if (!target || baseline || !sim.runnable) return
+        if (family !== target.presetId) return
+        setBaseline({ periods: sim.periods, series: sim.retentionSeries })
+      }),
+    [family, sim.runnable, sim.periods, sim.retentionSeries, baseline],
+  )
 
   const expectedTenure = useMemo(() => computeExpectedTenure(chain), [chain])
 
@@ -77,9 +100,14 @@ export function RetentionChart({ chain, sim }: RetentionChartProps) {
   const yMax = Math.max(...sim.retentionSeries, ...(baselineActive ? baseline.series : []), 1)
   const y = (v: number) => LINE_PAD_TOP + lineInnerH - (v / yMax) * lineInnerH
 
-  const baselinePath = baselineActive
-    ? baseline.series.map((v, week) => `${week === 0 ? 'M' : 'L'} ${x(week)} ${y(v)}`).join(' ')
-    : ''
+  // Revealed by week, same as the live line below -- so a pinned baseline
+  // animates in alongside the current run instead of snapping to full length
+  // the instant it's pinned.
+  const revealedBaseline = baselineActive ? baseline.series.slice(0, sim.period + 1) : []
+  const baselinePath =
+    revealedBaseline.length > 0
+      ? revealedBaseline.map((v, week) => `${week === 0 ? 'M' : 'L'} ${x(week)} ${y(v)}`).join(' ')
+      : ''
 
   const revealed = sim.retentionSeries.slice(0, sim.period + 1)
   const points = revealed.map((v, week) => ({ x: x(week), y: y(v), week, v }))

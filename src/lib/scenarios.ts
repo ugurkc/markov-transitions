@@ -138,6 +138,19 @@ export function getScenario(id: string): Scenario | undefined {
   return scenarios.find((s) => s.id === id)
 }
 
+/**
+ * A chain's identity for before/after comparison purposes. A scenario's own
+ * id is unique per chip (`q1-faster`, `q1-gentler`, ...), so two chips from
+ * the same family would otherwise look like a totally different chain to
+ * anything keying off `chain.id` directly. Grouping by the underlying preset
+ * id instead lets a family of examples be treated as "the same chain, edited"
+ * -- which is exactly what they are -- while a genuinely different chain
+ * (another preset, or "Build your own") still resolves to its own id.
+ */
+export function comparisonFamily(chainId: string): string {
+  return getScenario(chainId)?.presetId ?? chainId
+}
+
 /** The scenario's chain: its preset with the row edits applied. */
 export function buildScenarioChain(scenario: Scenario): Chain {
   const preset = presets.find((p) => p.id === scenario.presetId)
