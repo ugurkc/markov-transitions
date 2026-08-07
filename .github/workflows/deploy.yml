@@ -31,9 +31,14 @@ jobs:
       # Vite hashes asset filenames by content, so the CSS name is an exact
       # fingerprint of this particular build. The deploy job uses it to prove
       # *this* build reached production — not merely that some build did.
+      # The chunk's name prefix isn't guaranteed to be "index": Rollup names
+      # a chunk shared across multiple entry points (main + play) after a
+      # module in the shared graph, which has already changed once as the
+      # app grew — so this matches on the hashed filename generically rather
+      # than assuming which name it currently carries.
       - id: fingerprint
         run: |
-          asset=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.css' dist/index.html | head -1)
+          asset=$(grep -o 'assets/[A-Za-z0-9_-]*\.css' dist/index.html | head -1)
           if [ -z "$asset" ]; then
             echo "::error::Could not fingerprint the build - no hashed CSS found in dist/index.html"
             exit 1
