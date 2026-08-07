@@ -1,4 +1,4 @@
-# Watershed
+# Move the Riverbed
 
 An interactive article and tool for modeling player lifecycles — onboarding,
 engagement, churn, and win-back — as Markov chains. You can't move the
